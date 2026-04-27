@@ -11,6 +11,7 @@ services:
         target: /project
     environment:
       - WATCH_PATH=/project
+      - PYTHONPATH=/app
     stdin_open: true
     tty: true
-    command: python -m backend.main --path /project
+    command: python backend/main.py --path /project
