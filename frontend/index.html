@@ -1615,6 +1615,7 @@
                 if (settings.showAxis !== undefined) {
                     this.showAxis = settings.showAxis;
                     if (this.axisGroup) this.axisGroup.visible = this.showAxis;
+                    if (this.armillaryGroup) this.armillaryGroup.visible = this.showAxis;
                     document.getElementById('toggle-axis').checked = this.showAxis;
                 }
                 if (settings.showRings !== undefined) {
@@ -2406,7 +2407,7 @@
         // X/Y/Z 轴坐标环，大而细
         addArmillarySphere() {
             this.armillaryGroup = new THREE.Group();
-            this.armillaryGroup.visible = true;
+            this.armillaryGroup.visible = this.showAxis;
             this.scene.add(this.armillaryGroup);
             
             const ringRadius = 30;  // 较大范围
