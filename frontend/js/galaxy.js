@@ -1,6 +1,6 @@
 /**
- * CodeNebula - 星系渲染器
- * 简化的恒星/行星渲染 + 特效动画
+ * CodeNebula - Galaxy Renderer
+ * Simplified star/planet rendering + special effect animations
  */
 
 import * as THREE from 'three';
@@ -10,50 +10,50 @@ export class GalaxyRenderer {
         this.scene = scene;
         this.camera = camera;
 
-        // 恒星和特效容器
+        // Star and effect containers
         this.starGroup = new THREE.Group();
         this.effectGroup = new THREE.Group();
         this.scene.add(this.starGroup);
         this.scene.add(this.effectGroup);
 
-        // 恒星数据
+        // Star data
         this.stars = new Map();
         this.connections = [];
 
-        // 统计
+        // Stats
         this.stats = { files: 0, functions: 0, classes: 0 };
 
-        // 筛选
+        // Filters
         this.filters = {
             py: true,
             js: true,
             connections: false
         };
 
-        // 动画状态
+        // Animation state
         this.animations = [];
 
-        // 创建中轴线（恒星旋转的参照轴）
+        // Create central axis (reference axis for star rotation)
         this.createCentralAxis();
     }
 
     createCentralAxis() {
         console.log('[Galaxy] Creating central axis...');
         
-        // 中轴线组
+        // Central axis group
         this.axisGroup = new THREE.Group();
         this.scene.add(this.axisGroup);
 
-        // 主轴线：从中心向上延伸的直线
+        // Main axis: line extending from center
         const axisLength = 150;
         const axisGeometry = new THREE.BufferGeometry();
         const axisPositions = new Float32Array([
-            0, -axisLength, 0,  // 底部
-            0, axisLength, 0   // 顶部
+            0, -axisLength, 0,  // Bottom
+            0, axisLength, 0   // Top
         ]);
         axisGeometry.setAttribute('position', new THREE.BufferAttribute(axisPositions, 3));
 
-        // 发光轴线材质 - 增加亮度
+        // Glowing axis material
         const axisMaterial = new THREE.LineBasicMaterial({
             color: 0x00ffff,
             transparent: false,
@@ -63,7 +63,7 @@ export class GalaxyRenderer {
         const axisLine = new THREE.Line(axisGeometry, axisMaterial);
         this.axisGroup.add(axisLine);
 
-        // 轴线外层发光管道
+        // Axis outer glow pipe
         const pipeGeometry = new THREE.CylinderGeometry(1.5, 1.5, axisLength * 2, 16);
         const pipeMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
@@ -74,7 +74,7 @@ export class GalaxyRenderer {
         const pipeMesh = new THREE.Mesh(pipeGeometry, pipeMaterial);
         this.axisGroup.add(pipeMesh);
 
-        // 中心发光球体 - 更亮
+        // Center glowing sphere
         const coreGeometry = new THREE.SphereGeometry(5, 32, 32);
         const coreMaterial = new THREE.MeshBasicMaterial({
             color: 0xffffff
@@ -83,46 +83,46 @@ export class GalaxyRenderer {
         coreMesh.position.y = 0;
         this.axisGroup.add(coreMesh);
 
-        // 核心外层光晕（调暗）
+        // Core outer glow (dimmed)
         const coreGlowGeometry = new THREE.SphereGeometry(10, 32, 32);
         const coreGlowMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
             transparent: true,
-            opacity: 0.08,  // 调暗
+            opacity: 0.08,  // Dimmed
             side: THREE.BackSide
         });
         const coreGlowMesh = new THREE.Mesh(coreGlowGeometry, coreGlowMaterial);
         coreMesh.add(coreGlowMesh);
 
-        // 最外层大光晕（调暗）
+        // Outermost glow (dimmed)
         const outerGlowGeometry = new THREE.SphereGeometry(20, 32, 32);
         const outerGlowMaterial = new THREE.MeshBasicMaterial({
             color: 0x0088ff,
             transparent: true,
-            opacity: 0.05,  // 调暗
+            opacity: 0.05,  // Dimmed
             side: THREE.BackSide
         });
         const outerGlowMesh = new THREE.Mesh(outerGlowGeometry, outerGlowMaterial);
         coreMesh.add(outerGlowMesh);
 
-        // 水平旋转光环（调暗）
+        // Horizontal rotating ring (dimmed)
         const ringGeometry = new THREE.RingGeometry(15, 18, 64);
         const ringMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ffff,
             transparent: true,
-            opacity: 0.08,  // 调暗
+            opacity: 0.08,  // Dimmed
             side: THREE.DoubleSide
         });
         const ring = new THREE.Mesh(ringGeometry, ringMaterial);
         ring.rotation.x = Math.PI / 2;
         this.axisGroup.add(ring);
 
-        // 垂直旋转光环（调暗）
+        // Vertical rotating ring (dimmed)
         const vRingGeometry = new THREE.RingGeometry(12, 14, 64);
         const vRingMaterial = new THREE.MeshBasicMaterial({
             color: 0xff00ff,
             transparent: true,
-            opacity: 0.06,  // 调暗
+            opacity: 0.06,  // Dimmed
             side: THREE.DoubleSide
         });
         const vRing = new THREE.Mesh(vRingGeometry, vRingMaterial);
@@ -161,7 +161,7 @@ export class GalaxyRenderer {
     loadStars(starsData) {
         console.log('[Galaxy] loadStars called with', starsData?.length || 0, 'stars');
 
-        // 清空现有
+        // Clear existing
         this.starGroup.clear();
         this.stars.clear();
 
@@ -191,69 +191,68 @@ export class GalaxyRenderer {
         const isPy = ext === '.py';
         const isJs = ['.js', '.ts', '.jsx', '.tsx'].includes(ext);
 
-        // 筛选
+        // Filters
         if (isPy && !this.filters.py) return;
         if (isJs && !this.filters.js) return;
 
-        // 位置：银河系圆盘分布
+        // Position: galaxy disk distribution
         const maxRadius = 80;
         const diskThickness = 5;
         
-        // 使用文件路径生成种子
+        // Generate seed from file path
         const seed = this.hashCode(starData.path || starData.name);
         
-        // 使用 Mulberry32 伪随机数生成器（高质量、快速）
+        // Use Mulberry32 PRNG (high quality, fast)
         const rng = this.mulberry32(seed);
         
-        // 生成三个独立的随机数
-        const r = rng();      // 0-1，用于半径
-        const theta = rng();  // 0-1，用于角度
-        const yFactor = rng(); // 0-1，用于Y轴高度
+        // Generate three independent random numbers
+        const r = rng();      // 0-1, for radius
+        const theta = rng();  // 0-1, for angle
+        const yFactor = rng(); // 0-1, for Y-axis height
         
-        // 半径：平方根分布让恒星更集中在中心
+        // Radius: square root distribution clusters stars toward center
         const radius = Math.sqrt(r) * maxRadius;
         
-        // 角度：均匀分布在 0-2π
+        // Angle: uniform distribution 0-2π
         const angle = theta * Math.PI * 2;
         
-        // 转换为直角坐标（xz平面）
+        // Convert to Cartesian coordinates (xz plane)
         const x = radius * Math.cos(angle);
         const z = radius * Math.sin(angle);
         
-        // Y轴：使用反正切变换，让高度分布更像高斯
+        // Y-axis: use arctan transform for Gaussian-like height distribution
         const normalizedY = (yFactor - 0.5) * 2;
         const clampedY = Math.atan(normalizedY * 3) / (Math.PI / 2) * diskThickness;
 
         console.log('[Galaxy] Creating star:', starData.name, 'at', x, clampedY, z);
 
-        // 颜色
+        // Color
         let color = 0xffffff;
-        if (isPy) color = 0x00d4ff;       // 青色 - Python
-        else if (isJs) color = 0xf7df1e;  // 黄色 - JS
+        if (isPy) color = 0x00d4ff;       // Cyan - Python
+        else if (isJs) color = 0xf7df1e;  // Yellow - JS
 
-        // 大小基于代码行数（增强版：使用更明显的权重差异）
-        // 公式：基础 + sqrt(行数)*系数，让大文件更突出
+        // Size based on code lines (enhanced: more obvious weight differences)
         const lines = starData.lines || 10;
-        // 小文件(10行)：~2.5
-        // 中文件(50行)：~5.8
-        // 大文件(100行)：~7.5
-        // 超大文件(200行)：~9
+        // Small file (10 lines): ~2.5
+        // Medium file (50 lines): ~5.8
+        // Large file (100 lines): ~7.5
+        // Extra large file (200 lines): ~9
         let size = 1.5 + Math.sqrt(lines) * 0.6;
-        size = Math.min(Math.max(size, 1.5), 10); // 范围 1.5 - 10
+        size = Math.min(Math.max(size, 1.5), 10); // Range 1.5 - 10
 
-        // 创建球体
+        // Create sphere
         const geometry = new THREE.SphereGeometry(size, 16, 16);
         const material = new THREE.MeshBasicMaterial({ color });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(x, clampedY, z);
         mesh.userData = starData;
 
-        // 创建光晕（调暗）
+        // Create glow (dimmed)
         const glowGeometry = new THREE.SphereGeometry(size * 2, 16, 16);
         const glowMaterial = new THREE.MeshBasicMaterial({
             color,
             transparent: true,
-            opacity: 0.08,  // 调暗
+            opacity: 0.08,  // Dimmed
             side: THREE.BackSide
         });
         const glow = new THREE.Mesh(glowGeometry, glowMaterial);

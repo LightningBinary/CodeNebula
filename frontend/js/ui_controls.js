@@ -1,5 +1,5 @@
 /**
- * CodeNebula - UI控制
+ * CodeNebula - UI Controls
  */
 
 export class UIController {
@@ -89,7 +89,7 @@ export class UIController {
             ].slice(0, 20);
 
             if (results.length === 0) {
-                resultsEl.innerHTML = '<div class="result-item"><span class="result-name">无匹配结果</span></div>';
+                resultsEl.innerHTML = '<div class="result-item"><span class="result-name">No matching results</span></div>';
                 return;
             }
 
@@ -128,10 +128,10 @@ export class UIController {
     }
 
     getTypeLabel(item) {
-        if (item.type === 'class') return '📁 类';
-        if (item.type === 'method') return '⚙️ 方法';
-        if (item.type === 'function') return '⚡ 函数';
-        return '📄 文件';
+        if (item.type === 'class') return 'Class';
+        if (item.type === 'method') return 'Method';
+        if (item.type === 'function') return 'Function';
+        return 'File';
     }
 
     focusOnNode(id, type) {
@@ -202,7 +202,7 @@ export class UIController {
     updateCameraPosition() {
         const pos = this.sceneManager.camera.position;
         document.getElementById('camera-pos').textContent =
-            `相机: ${pos.x.toFixed(0)}, ${pos.y.toFixed(0)}, ${pos.z.toFixed(0)}`;
+            `Camera: ${pos.x.toFixed(0)}, ${pos.y.toFixed(0)}, ${pos.z.toFixed(0)}`;
     }
 
     setData(data) {

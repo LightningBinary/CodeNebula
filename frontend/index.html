@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CodeNebula - 代码星云</title>
+    <title>CodeNebula - Code Visualization</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -308,19 +308,16 @@
     <div id="app">
         <div id="canvas-container"></div>
         
-        <!-- 右键菜单 -->
+        <!-- Right-click Menu -->
         <div id="context-menu" class="context-menu hidden">
             <div class="context-menu-item" id="ctx-copy-path">
-                <span class="icon">📋</span>
                 <span>Copy File Path</span>
             </div>
             <div class="context-menu-item" id="ctx-view-details">
-                <span class="icon">🔍</span>
-                <span>文件详情</span>
+                <span>File Details</span>
             </div>
             <div class="context-menu-item" id="ctx-view-code">
-                <span class="icon">📄</span>
-                <span>查看代码</span>
+                <span>View Code</span>
             </div>
         </div>
         
@@ -330,14 +327,14 @@
             </div>
             <div class="status-badge" id="ws-status">
                 <span class="status-dot"></span>
-                <span class="status-text">未连接</span>
+                <span class="status-text">Disconnected</span>
             </div>
             <div class="toolbar-controls">
-                <button id="btn-labels" class="tool-btn" title="显示文件名标签">T</button>
-                <button id="btn-reset" class="tool-btn" title="重置视图">R</button>
+                <button id="btn-labels" class="tool-btn" title="Toggle file name labels">T</button>
+                <button id="btn-reset" class="tool-btn" title="Reset view">R</button>
                 <button id="btn-path" class="tool-btn" title="Select Path">P</button>
-                <button id="btn-settings" class="tool-btn" title="设置">S</button>
-                <button id="btn-fullscreen" class="tool-btn" title="全屏">F</button>
+                <button id="btn-settings" class="tool-btn" title="Settings">S</button>
+                <button id="btn-fullscreen" class="tool-btn" title="Fullscreen">F</button>
             </div>
         </header>
         <aside id="sidebar">
@@ -397,9 +394,9 @@
             
             <div class="filter-group">
                 <label>
-                    <input type="checkbox" id="toggle-axis" checked>
+                    <input type="checkbox" id="toggle-axis">
                     <span>Axis & Grid</span>
-                    <small style="color: #5a5a70; font-size: 9px; display: block; margin-left: 24px;">中心轴 + XYZ 坐标环</small>
+                    <small style="color: #5a5a70; font-size: 9px; display: block; margin-left: 24px;">Central axis + XYZ coordinate rings</small>
                 </label>
                 <label>
                     <input type="checkbox" id="toggle-rings">
@@ -416,7 +413,7 @@
                 </label>
             </div>
             
-            <button id="btn-apply-settings" class="btn-rescan">重新扫描应用设置</button>
+            <button id="btn-apply-settings" class="btn-rescan">Apply Settings</button>
         </div>
         
         <div id="loading-overlay" class="loading">
@@ -424,7 +421,7 @@
             <p>Loading...</p>
         </div>
         
-        <!-- 标签容器 -->
+        <!-- Label Container -->
         <div id="label-container"></div>
         
         <!-- Path Selector -->
@@ -464,8 +461,8 @@
         </div>
     </div>
     
-    <!-- 坐标显示 - 始终可见 -->
-    <!-- 文件详情浮层面板 -->
+    <!-- Coordinate Display -->
+    <!-- File Detail Panel -->
     <div id="detail-panel" style="
         position: fixed;
         top: 50%;
@@ -481,14 +478,14 @@
         backdrop-filter: blur(16px);
         overflow: hidden;
     ">
-        <!-- 头部 -->
+        <!-- Header -->
         <div style="
             display: flex; align-items: center; justify-content: space-between;
             padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
             background: rgba(10,10,20,0.6);
         ">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <span id="detail-file-icon" style="font-size: 22px;">📄</span>
+                <span id="detail-file-icon" style="font-size: 14px; color: #00d4ff; font-weight: 700;"></span>
                 <span id="detail-filename" style="font-weight: 700; font-size: 15px; color: #e0e0f0;"></span>
             </div>
             <button id="close-detail-panel" style="
@@ -497,7 +494,7 @@
             ">&times;</button>
         </div>
 
-        <!-- 文件路径 -->
+        <!-- File Path -->
         <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                 <span id="detail-path" style="font-size: 11px; color: #5a5a70; font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
@@ -509,27 +506,27 @@
             </div>
         </div>
 
-        <!-- 核心指标 -->
+        <!-- Core Metrics -->
         <div style="display: grid; grid-template-columns: repeat(4, 1fr); padding: 16px 20px; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div style="text-align: center;">
                 <div id="detail-lines" style="font-size: 20px; font-weight: 700; color: #00d4ff; font-family: monospace;">--</div>
-                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">行数</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">Lines</div>
             </div>
             <div style="text-align: center;">
                 <div id="detail-imports" style="font-size: 20px; font-weight: 700; color: #ffb74d; font-family: monospace;">--</div>
-                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">导入</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">Imports</div>
             </div>
             <div style="text-align: center;">
                 <div id="detail-importers" style="font-size: 20px; font-weight: 700; color: #ba68c8; font-family: monospace;">--</div>
-                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">被依赖</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">Dependencies</div>
             </div>
             <div style="text-align: center;">
                 <div id="detail-size" style="font-size: 20px; font-weight: 700; color: #80cbc4; font-family: monospace;">--</div>
-                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">大小</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">Size</div>
             </div>
         </div>
 
-        <!-- 函数和类 -->
+        <!-- Functions and Classes -->
         <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px; margin-bottom: 8px;">
                 Functions &amp; Classes
@@ -546,10 +543,10 @@
             </div>
         </div>
 
-        <!-- 外部引用分布 -->
+        <!-- External References -->
         <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
             <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px; margin-bottom: 8px;">
-                外部引用
+                External References
             </div>
             <div id="detail-ext-imports" style="display: flex; flex-wrap: wrap; gap: 6px;">
                 <span style="font-size: 11px; color: #5a5a70;">No Data</span>
@@ -565,7 +562,7 @@
         </div>
     </div>
 
-    <!-- 详情面板遮罩 -->
+    <!-- Detail Panel Overlay -->
     <div id="detail-overlay" style="
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0,0,0,0.4); z-index: 1999; display: none;
@@ -575,7 +572,7 @@
         <span id="coords-display">X: 0  Y: 0  Z: 0</span>
     </div>
     
-    <!-- 代码查看抽屉 -->
+    <!-- Code Preview Drawer -->
     <div id="code-drawer" style="
         position: fixed;
         top: 0;
@@ -592,7 +589,7 @@
         flex-direction: column;
         backdrop-filter: blur(10px);
     ">
-        <!-- 拖拽调整宽度的手柄 -->
+        <!-- Drag handle for width adjustment -->
         <div id="drawer-resize-handle" style="
             position: absolute;
             left: 0;
@@ -604,7 +601,7 @@
             transition: background 0.2s;
             z-index: 10;
         "></div>
-        <!-- 抽屉头部 -->
+        <!-- Drawer Header -->
         <div style="
             display: flex;
             align-items: center;
@@ -614,7 +611,7 @@
             background: rgba(10,10,20,0.8);
         ">
             <div style="display: flex; align-items: center; gap: 12px;">
-                <span id="drawer-file-icon" style="font-size: 20px;">📄</span>
+                <span id="drawer-file-icon" style="font-size: 12px; color: #00d4ff; font-weight: 700;"></span>
                 <span id="drawer-filename" style="font-weight: 600; color: #00d4ff;">filename.py</span>
             </div>
             <button id="close-drawer" style="
@@ -629,7 +626,7 @@
             ">&times;</button>
         </div>
         
-        <!-- 代码内容区 -->
+        <!-- Code Content Area -->
         <div id="code-content" style="
             flex: 1;
             overflow: auto;
@@ -638,7 +635,7 @@
             font-size: 13px;
             line-height: 1.6;
         ">
-            <!-- 加载中 -->
+            <!-- Loading -->
             <div id="code-loading" style="
                 display: flex;
                 align-items: center;
@@ -650,7 +647,7 @@
             </div>
         </div>
         
-        <!-- 抽屉底部 -->
+        <!-- Drawer Footer -->
         <div style="
             padding: 12px 20px;
             border-top: 1px solid rgba(255,255,255,0.1);
@@ -669,14 +666,14 @@
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
         }
-        /* 拖拽调整宽度手柄 */
+        /* Drag handle for width adjustment */
         #drawer-resize-handle:hover {
             background: rgba(0, 212, 255, 0.3) !important;
         }
         #drawer-resize-handle:active {
             background: rgba(0, 212, 255, 0.5) !important;
         }
-        /* Prism.js 自定义样式 */
+        /* Prism.js Custom Styles */
         #code-content pre {
             margin: 0 !important;
             padding: 0 !important;
@@ -687,7 +684,7 @@
             font-size: 13px !important;
             line-height: 1.6 !important;
         }
-        /* 滚动条样式 */
+        /* Scrollbar Styles */
         #code-content::-webkit-scrollbar {
             width: 8px;
         }
@@ -707,7 +704,7 @@
         }
     </style>
     
-    <!-- 恒星标签样式 -->
+    <!-- Star Label Styles -->
     <style>
         .star-label {
             padding: 6px 12px;
@@ -748,7 +745,7 @@
             pointer-events: auto;
         }
         
-        /* 右键菜单 */
+        /* Right-click Menu */
         .context-menu {
             position: fixed;
             background: rgba(20, 20, 30, 0.95);
@@ -803,19 +800,19 @@
     
     <!-- Main App -->
     <script>
-    // 全局星系配置
+    // Global Galaxy Config
     const GalaxyConfig = {
-        diskRadius: 600,       // 圆盘半径 - 增大让恒星更分散
-        diskHeight: 100,        // 中心厚度（Z轴最大范围）
-        thicknessFactor: 0.65,  // 边缘厚度因子
-        starSizeMult: 1.0,      // 恒星大小倍数
-        planetSizeMult: 0.8     // 行星大小倍数
+        diskRadius: 600,       // Disk radius
+        diskHeight: 100,        // Center thickness (Z-axis range)
+        thicknessFactor: 0.65,  // Edge thickness factor
+        starSizeMult: 1.0,      // Star size multiplier
+        planetSizeMult: 0.8     // Planet size multiplier
     };
     
-    // 位置计算函数（提取出来供实时更新使用）
-    // 银河系圆盘分布：中心密、边缘疏的圆形盘状
+    // Position calculation function (extracted for real-time updates)
+    // Galaxy disk distribution: dense in center, sparse at edges
     function calculateStarPosition(name, config, data = {}) {
-        // Mulberry32 伪随机数生成器
+        // Mulberry32 pseudo-random number generator
         const mulberry32 = (seed) => {
             return function() {
                 let t = seed += 0x6D2B79F5;
@@ -825,7 +822,7 @@
             };
         };
         
-        // 哈希函数
+        // Hash function
         const hashFn = (str) => {
             let h = 0;
             for (let i = 0; i < str.length; i++) {
@@ -838,28 +835,27 @@
         const seed = hashFn(name);
         const rng = mulberry32(seed);
         
-        const r1 = rng();  // 半径
-        const r2 = rng();  // 角度
-        const r3 = rng();  // Y轴高度
+        const r1 = rng();  // radius
+        const r2 = rng();  // angle
+        const r3 = rng();  // Y-axis height
         
         const { diskRadius, diskHeight, thicknessFactor } = config;
         
         const minRadius = Math.max(25, diskRadius * 0.05);
         const maxRadius = diskRadius * 0.95;
         
-        // 半径：平方根分布，中心密
+        // Radius: square root distribution, dense in center
         const r = minRadius + (maxRadius - minRadius) * Math.sqrt(r1);
         
-        // 角度：使用黄金角螺旋分布，确保均匀分隔不重叠
+        // Angle: golden angle spiral distribution
         const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ≈ 2.39996
         const fileIndex = data._index || 0;
-        // 主要用黄金角螺旋 + 随机微扰动
-        const theta = fileIndex * goldenAngle + r2 * 0.5; // 黄金角螺旋 + 小随机
+        const theta = fileIndex * goldenAngle + r2 * 0.5; // Golden angle spiral + small random
         
         const x = r * Math.cos(theta);
         const z = r * Math.sin(theta);
         
-        // Y轴高度
+        // Y-axis height
         const normalizedR = r / diskRadius;
         const maxHeight = diskHeight * (1 - (1 - thicknessFactor) * normalizedR * normalizedR);
         const y = (r3 - 0.5) * 2 * maxHeight;
@@ -875,21 +871,21 @@
             const { diskRadius, diskHeight, thicknessFactor, starSizeMult, planetSizeMult } = GalaxyConfig;
 
             const ext = data.ext || '.py';
-            // 文件类型色彩编码（专为深色宇宙背景设计，颜色鲜明有区分度）
+            // File type color encoding (designed for dark space background)
             const colorMap = {
-                // Python - 科技蓝
+                // Python - Tech blue
                 '.py': 0x00d4ff,
                 '.pyw': 0x00b8e6,
 
-                // TypeScript / TSX - 宝石蓝
+                // TypeScript / TSX - Gem blue
                 '.ts': 0x4fc3f7,
                 '.tsx': 0x4fc3f7,
 
-                // JavaScript / JSX - 金黄
+                // JavaScript / JSX - Golden yellow
                 '.js': 0xffd740,
                 '.jsx': 0xffd740,
 
-                // Web 样式 - 紫罗兰
+                // Web styles - Violet
                 '.html': 0xff7043,
                 '.htm': 0xff7043,
                 '.css': 0xce93d8,
@@ -897,7 +893,7 @@
                 '.sass': 0xf48fb1,
                 '.less': 0x80cbc4,
 
-                // 配置/数据 - 青绿
+                // Config/Data - Teal
                 '.json': 0x80cbc4,
                 '.yaml': 0x66bb6a,
                 '.yml': 0x66bb6a,
@@ -909,7 +905,7 @@
                 '.txt': 0xb0bec5,
                 '.rst': 0x90a4ae,
 
-                // 后端语言
+                // Backend languages
                 '.go': 0x00bcd4,
                 '.rs': 0xff8a65,
                 '.java': 0xffb74d,
@@ -920,7 +916,7 @@
                 '.h': 0x78909c,
                 '.cs': 0x4caf50,
 
-                // Shell/脚本 - 亮绿
+                // Shell/Script - Bright green
                 '.sh': 0xa5d6a7,
                 '.bash': 0xa5d6a7,
                 '.zsh': 0xa5d6a7,
@@ -928,7 +924,7 @@
                 '.bat': 0x81c784,
                 '.cmd': 0x81c784,
 
-                // 其他语言
+                // Other languages
                 '.sql': 0xffb74d,
                 '.vue': 0x4db6ac,
                 '.svelte': 0xff7043,
@@ -939,24 +935,24 @@
                 '.r': 0x64b5f6,
             };
             
-            let color = colorMap[ext] || 0xffffff;  // 默认白色
+            let color = colorMap[ext] || 0xffffff;  // Default white
 
-            // 计算大小：基于文件行数
+            // Calculate size based on file lines
             const size = Math.max(1.5, Math.log10((data.lines || 10) + 1) * 2) * starSizeMult;
 
-            // 保存 hash 用于实时更新（传入 data 以便计算 imports 因子）
+            // Save hash for real-time updates
             const posInfo = calculateStarPosition(data.name || 'file', GalaxyConfig, data);
             this.hash = posInfo.hash;
-            // 注意：Y现在是高度轴，旋转时保持Y不变
+            // Note: Y is now the height axis, keep Y unchanged during rotation
             
             const { x, y, z } = posInfo;
 
             const geometry = new THREE.SphereGeometry(size, 16, 16);
-            // 透明发光材质 - 更强的 emissiveIntensity 让 Bloom 效果更明显
+            // Transparent emissive material - stronger emissiveIntensity for Bloom effect
             const material = new THREE.MeshStandardMaterial({
                 color: color,
                 emissive: color,
-                emissiveIntensity: 2.0,  // 增强发光强度
+                emissiveIntensity: 2.0,  // Enhanced glow intensity
                 metalness: 0.0,
                 roughness: 0.2,
                 transparent: true,
@@ -1540,7 +1536,7 @@
             this.connectionPairs = [];  // 初始化连线数组
             this.labelsVisible = false;  // 标签显示状态
             // 显示选项状态
-            this.showAxis = true;
+            this.showAxis = false;
             this.showRings = false;  // 默认关闭 Orbit Rings
             this.showConnections = true;
             this.focusMode = true;  // 专注模式：悬停时高亮连线（默认开启，非关联连线完全消失）
@@ -2007,13 +2003,13 @@
 
             // 文件名和图标
             document.getElementById('detail-filename').textContent = data.name || 'Unknown';
-            const iconMap = {
-                '.py': '🐍', '.js': '📜', '.ts': '📘', '.jsx': '⚛️', '.tsx': '⚛️',
-                '.html': '🌐', '.css': '🎨', '.json': '📋', '.md': '📝',
-                '.yaml': '⚙️', '.yml': '⚙️', '.sh': '💻', '.go': '🔵',
-                '.rs': '🦀', '.java': '☕', '.rb': '💎', '.vue': '💚',
+            const langMap = {
+                '.py': 'PY', '.js': 'JS', '.ts': 'TS', '.jsx': 'JSX', '.tsx': 'TSX',
+                '.html': 'HTML', '.css': 'CSS', '.json': 'JSON', '.md': 'MD',
+                '.yaml': 'YAML', '.yml': 'YAML', '.sh': 'SH', '.go': 'GO',
+                '.rs': 'RS', '.java': 'JAVA', '.rb': 'RB', '.vue': 'VUE',
             };
-            document.getElementById('detail-file-icon').textContent = iconMap[ext] || '📄';
+            document.getElementById('detail-file-icon').textContent = langMap[ext] || ext || 'FILE';
 
             // 文件路径
             document.getElementById('detail-path').textContent = data.path || '';
@@ -2027,10 +2023,7 @@
             // 计算被依赖数量：其他文件引用了当前文件（去重）
             const relatedIds = new Set();
             this.connectionPairs.forEach(conn => {
-                // star1 是 importer，star2 是被引用方
-                // 如果 star1 === 当前文件，说明当前文件引用了别人，不算被依赖
-                // 如果 star2 === 当前文件，说明别人引用了当前文件，算被依赖
-                if (conn.star2Id === starId) {
+                if (conn.star2Id === star.data.id) {
                     relatedIds.add(conn.star1Id);
                 }
             });
@@ -2039,20 +2032,20 @@
             // 函数和类
             const fns = data.functions || [];
             const cls = data.classes || [];
-            document.getElementById('detail-functions').textContent = fns.length > 0 ? `${fns.length} 个函数` : '—';
-            document.getElementById('detail-classes').textContent = cls.length > 0 ? `${cls.length} 个类` : '—';
+            document.getElementById('detail-functions').textContent = fns.length > 0 ? `${fns.length} function${fns.length !== 1 ? 's' : ''}` : '—';
+            document.getElementById('detail-classes').textContent = cls.length > 0 ? `${cls.length} class${cls.length !== 1 ? 'es' : ''}` : '—';
 
             // 外部引用分类展示
             const extImports = data.external_imports || [];
             const extContainer = document.getElementById('detail-ext-imports');
             if (extImports.length === 0) {
-                extContainer.innerHTML = '<span style="font-size:11px;color:#5a5a70;">无外部依赖</span>';
+                extContainer.innerHTML = '<span style="font-size:11px;color:#5a5a70;">No external dependencies</span>';
             } else {
                 const typeColors = {
-                    'framework': { color: '#fbbf24', label: '框架' },
-                    'builtin':   { color: '#60a5fa', label: '内置' },
-                    'thirdparty':{ color: '#f87171', label: '第三方' },
-                    'other':     { color: '#c084fc', label: '其他' },
+                    'framework': { color: '#fbbf24', label: 'Framework' },
+                    'builtin':   { color: '#60a5fa', label: 'Builtin' },
+                    'thirdparty':{ color: '#f87171', label: 'Third-party' },
+                    'other':     { color: '#c084fc', label: 'Other' },
                 };
                 const frameworkPatterns = ['react', 'vue', 'angular', 'next', 'nuxt', 'fastapi', 'fastapi', 'flask', 'django', 'express', 'koa', 'nestjs', 'prisma', 'mongoose', 'axios', 'swr', 'redux', 'zustand', 'tanstack', 'remix'];
                 const builtinPatterns = ['os', 'sys', 'json', 're', 'math', 'time', 'datetime', 'collections', 'itertools', 'functools', 'random', 'uuid', 'hashlib', 'pathlib', 'typing', 'abc', 'copy', 'io', 'warnings', 'traceback', 'logging', 'threading', 'asyncio', 'http', 'urllib', 'html', 'xml', 'csv', 'argparse', 'subprocess', 'pickle', 'sqlite3', 'zipfile', 'tarfile', 'gzip', 'shutil', 'glob', 'fnmatch', 'tempfile', 'ast', 'inspect', 'platform', 'path', 'fs', 'http', 'https', 'url', 'querystring', 'crypto', 'stream', 'events', 'util', 'assert', 'buffer', 'child_process', 'cluster', 'dns', 'zlib', 'readline', 'timers', 'console', 'process', 'async', 'events', 'fs', 'path', 'os'];
@@ -2079,7 +2072,7 @@
             }
 
             // 最后修改时间
-            document.getElementById('detail-modified').textContent = data.path ? '通过 WebSocket 实时监控' : '—';
+            document.getElementById('detail-modified').textContent = data.path ? 'Monitored via WebSocket' : '—';
 
             // 显示
             overlay.style.display = 'block';
@@ -2171,9 +2164,14 @@
                     '.py': 'python', '.js': 'javascript', '.ts': 'typescript',
                     '.jsx': 'jsx', '.tsx': 'tsx', '.html': 'html', '.css': 'css'
                 };
+                const drawerIconMap = {
+                    '.py': 'PY', '.js': 'JS', '.ts': 'TS', '.jsx': 'JSX', '.tsx': 'TSX',
+                    '.html': 'HTML', '.css': 'CSS'
+                };
                 const lang = langMap[data.ext] || 'javascript';
                 
                 // 更新抽屉标题
+                document.getElementById('drawer-file-icon').textContent = drawerIconMap[data.ext] || data.ext || '';
                 document.getElementById('drawer-filename').textContent = data.name;
                 document.getElementById('drawer-lines').textContent = `${lines.length} lines`;
                 
@@ -2582,7 +2580,7 @@
             const nameSpan = document.createElement('span');
             nameSpan.style.flex = '1';
             if (event.type === 'INIT') {
-                nameSpan.textContent = (event.count || 0) + ' 个文件';
+                nameSpan.textContent = (event.count || 0) + ' files';
             } else if (event.star?.name) {
                 nameSpan.textContent = event.star.name;
             } else if (event.star_id) {

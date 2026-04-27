@@ -97,12 +97,11 @@ class WebSocketServer:
         async def get_file_content(path: str):
             """Get file content"""
             try:
-                # Ensure correct path format
-                file_path = path.replace('/', '\\')
-                
                 # Security check: prevent path traversal attack
                 if '..' in path:
                     return JSONResponse({'error': 'Invalid path'}, status_code=400)
+                
+                file_path = path  # Use path as-is; Python handles both / and \ on Windows
                 
                 # Read file
                 with open(file_path, 'r', encoding='utf-8', errors='replace') as f:

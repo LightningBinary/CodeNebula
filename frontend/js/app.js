@@ -1,6 +1,6 @@
 /**
- * CodeNebula - 主应用
- * 事件驱动的实时可视化
+ * CodeNebula - Main Application
+ * Event-driven real-time visualization
  */
 
 import * as THREE from 'three';
@@ -24,7 +24,7 @@ class CodeNebulaApp {
     }
 
     async init() {
-        console.log('🚀 CodeNebula 初始化...');
+        console.log('CodeNebula initializing...');
 
         try {
             // 初始化 3D 场景
@@ -46,7 +46,7 @@ class CodeNebulaApp {
             // 绑定控制器
             this.bindControls();
 
-            console.log('✅ CodeNebula 就绪');
+            console.log('CodeNebula ready');
 
         } catch (error) {
             console.error('CodeNebula Error:', error);
@@ -164,15 +164,15 @@ class CodeNebulaApp {
 
     onConnected() {
         document.getElementById('ws-status').classList.add('connected');
-        document.querySelector('#ws-status .status-text').textContent = '已连接';
+        document.querySelector('#ws-status .status-text').textContent = 'Connected';
         document.getElementById('loading-overlay').classList.add('hidden');
-        console.log('✅ WebSocket 已连接');
+        console.log('WebSocket connected');
     }
 
     onDisconnected() {
         document.getElementById('ws-status').classList.remove('connected');
-        document.querySelector('#ws-status .status-text').textContent = '未连接';
-        console.log('⚠️ WebSocket 断开');
+        document.querySelector('#ws-status .status-text').textContent = 'Disconnected';
+        console.log('WebSocket disconnected');
     }
 
     onEvent(event) {
@@ -217,7 +217,7 @@ class CodeNebulaApp {
                 <div style="color: #ef4444; text-align: center;">
                     <p>${message}</p>
                     <p style="margin-top: 10px; font-size: 12px; color: #888;">
-                        确保后端正在运行: python backend/main.py --path /你的项目
+                        Make sure backend is running: python backend/main.py --path /your/project
                     </p>
                 </div>
             `;

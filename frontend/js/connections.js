@@ -1,5 +1,5 @@
 /**
- * CodeNebula - 连线渲染
+ * CodeNebula - Connection Rendering
  */
 
 import * as THREE from 'three';

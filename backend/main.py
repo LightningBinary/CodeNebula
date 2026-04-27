@@ -42,7 +42,7 @@ class CodeNebula:
         
         # Start WebSocket server
         import uvicorn
-        server_thread = threading.Thread(target=lambda: uvicorn.run(self.ws_server.app, host="127.0.0.1", port=8000, log_level="warning"))
+        server_thread = threading.Thread(target=lambda: uvicorn.run(self.ws_server.app, host="0.0.0.0", port=8000, log_level="warning"))
         server_thread.daemon = True
         server_thread.start()
         

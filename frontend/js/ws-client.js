@@ -1,6 +1,6 @@
 /**
- * CodeNebula - WebSocket 客户端
- * 事件驱动的实时通信
+ * CodeNebula - WebSocket Client
+ * Event-driven real-time communication
  */
 
 export class WebSocketClient {
@@ -25,25 +25,25 @@ export class WebSocketClient {
             this.ws = new WebSocket(this.url);
             
             this.ws.onopen = () => {
-                console.log('🔌 WebSocket 连接成功');
+                console.log('WebSocket connected');
                 this.reconnectAttempts = 0;
                 this.emit('connected');
 
-                // 连接成功后请求当前状态
+                // Request current state after connecting
                 setTimeout(() => {
                     this.send({ type: 'get_state' });
-                    console.log('📡 已发送 get_state 请求');
+                    console.log('get_state request sent');
                 }, 100);
             };
 
             this.ws.onclose = () => {
-                console.log('🔌 WebSocket 断开');
+                console.log('WebSocket disconnected');
                 this.emit('disconnected');
                 this.scheduleReconnect();
             };
 
             this.ws.onerror = (error) => {
-                console.error('❌ WebSocket 错误:', error);
+                console.error('WebSocket error:', error);
                 this.emit('error', error);
             };
 
@@ -53,24 +53,24 @@ export class WebSocketClient {
                     console.log('[WS] Received:', data.type, data);
                     this.emit('event', data);
                 } catch (e) {
-                    console.error('❌ 解析消息失败:', e);
+                    console.error('Failed to parse message:', e);
                 }
             };
             
         } catch (error) {
-            console.error('❌ 创建 WebSocket 失败:', error);
+            console.error('Failed to create WebSocket:', error);
             this.scheduleReconnect();
         }
     }
 
     scheduleReconnect() {
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-            console.log('⚠️ 达到最大重连次数');
+            console.log('Max reconnection attempts reached');
             return;
         }
 
         this.reconnectAttempts++;
-        console.log(`⏳ ${this.reconnectDelay / 1000}s 后尝试重连 (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        console.log(`Retrying in ${this.reconnectDelay / 1000}s (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
         
         setTimeout(() => this.connect(), this.reconnectDelay);
     }
@@ -109,7 +109,7 @@ export class WebSocketClient {
                 try {
                     handler(data);
                 } catch (e) {
-                    console.error(`❌ 事件处理错误 (${event}):`, e);
+                    console.error(`Event handling error (${event}):`, e);
                 }
             });
         }
