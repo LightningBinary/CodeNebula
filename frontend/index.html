@@ -1,0 +1,3708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeNebula - 代码星云</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #050508;
+            color: #e0e0e8;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        #app {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+        #toolbar {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background: linear-gradient(180deg, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0) 100%);
+            z-index: 600;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            background: linear-gradient(135deg, #00d4ff 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: #1a1a25;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+        .status-badge.connected .status-dot {
+            background: #22c55e;
+            box-shadow: 0 0 8px #22c55e;
+        }
+        .toolbar-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .tool-btn {
+            width: 36px; height: 36px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: #1a1a25;
+            color: #8888a0;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .tool-btn:hover {
+            background: #12121a;
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+        .tool-btn.active {
+            background: #00d4ff;
+            color: #050508;
+            border-color: #00d4ff;
+        }
+        .slider-group {
+            margin-bottom: 12px;
+        }
+        .slider-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #8888a0;
+            margin-bottom: 4px;
+        }
+        .slider-group label span {
+            color: #00d4ff;
+            font-family: monospace;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            -webkit-appearance: none;
+            background: #1a1a25;
+            border-radius: 2px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        #settings-panel {
+            position: fixed;
+            top: 70px;
+            right: 16px;
+            width: 260px;
+            background: rgba(18,18,26,0.98);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px;
+            z-index: 500;
+            display: none;
+        }
+        #settings-panel.visible, #path-selector.visible {
+            display: block;
+        }
+        #path-selector {
+            display: none;
+            z-index: 500 !important;
+        }
+        #settings-panel h3 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8888a0;
+            margin-bottom: 16px;
+        }
+        .btn-rescan {
+            width: 100%;
+            padding: 8px 16px;
+            background: #a855f7;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .btn-rescan:hover {
+            background: #9333ea;
+        }
+        #sidebar {
+            position: absolute;
+            top: 70px; left: 16px;
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 90;
+        }
+        .panel {
+            background: rgba(18,18,26,0.95);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .panel h3 {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #8888a0;
+            margin-bottom: 12px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: monospace;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0,212,255,0.5);
+        }
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: #5a5a70;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .filter-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #8888a0;
+        }
+        .filter-group input[type="checkbox"] {
+            accent-color: #00d4ff;
+            width: 16px;
+            height: 16px;
+        }
+        .event-log {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 11px;
+        }
+        .event-item {
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            background: #1a1a25;
+            border-radius: 4px;
+            border-left: 2px solid #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .event-item.created { border-left-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .event-item.deleted { border-left-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .event-item.modified { border-left-color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+        
+        .event-tag {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+            text-transform: uppercase;
+            min-width: 40px;
+            text-align: center;
+        }
+        .event-tag.created { background: #22c55e; color: #000; }
+        .event-tag.deleted { background: #ef4444; color: #fff; }
+        .event-tag.modified { background: #fbbf24; color: #000; }
+        .event-tag.init { background: #00d4ff; color: #000; }
+        
+        .modified-file-item {
+            padding: 6px 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .modified-file-item.created { background: rgba(34, 197, 94, 0.1); border-left: 2px solid #22c55e; }
+        .modified-file-item.deleted { background: rgba(239, 68, 68, 0.1); border-left: 2px solid #ef4444; }
+        .modified-file-item.modified { background: rgba(251, 191, 36, 0.1); border-left: 2px solid #fbbf24; }
+        .modified-file-item:hover {
+            filter: brightness(1.2);
+        }
+        .modified-file-item .filename {
+            font-weight: 600;
+            flex: 1;
+        }
+        .modified-file-item .time {
+            font-size: 9px;
+            color: #8888a0;
+        }
+        .loading {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: #0a0a0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            z-index: 2000;
+        }
+        .loading.hidden { display: none; }
+        .loading-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid #1a1a25;
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div id="canvas-container"></div>
+        
+        <!-- 右键菜单 -->
+        <div id="context-menu" class="context-menu hidden">
+            <div class="context-menu-item" id="ctx-copy-path">
+                <span class="icon">📋</span>
+                <span>Copy File Path</span>
+            </div>
+            <div class="context-menu-item" id="ctx-view-details">
+                <span class="icon">🔍</span>
+                <span>文件详情</span>
+            </div>
+            <div class="context-menu-item" id="ctx-view-code">
+                <span class="icon">📄</span>
+                <span>查看代码</span>
+            </div>
+        </div>
+        
+        <header id="toolbar">
+            <div class="logo">
+                <span class="logo-text">CodeNebula</span>
+            </div>
+            <div class="status-badge" id="ws-status">
+                <span class="status-dot"></span>
+                <span class="status-text">未连接</span>
+            </div>
+            <div class="toolbar-controls">
+                <button id="btn-labels" class="tool-btn" title="显示文件名标签">T</button>
+                <button id="btn-reset" class="tool-btn" title="重置视图">R</button>
+                <button id="btn-path" class="tool-btn" title="Select Path">P</button>
+                <button id="btn-settings" class="tool-btn" title="设置">S</button>
+                <button id="btn-fullscreen" class="tool-btn" title="全屏">F</button>
+            </div>
+        </header>
+        <aside id="sidebar">
+            <div class="panel">
+                <h3>Project Stats</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-files">0</span>
+                        <span class="stat-label">Files</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-functions">0</span>
+                        <span class="stat-label">Functions</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-classes">0</span>
+                        <span class="stat-label">Classes</span>
+                    </div>
+                </div>
+            </div>
+            <div class="panel" id="modified-panel" style="display: none;">
+                <h3>Modified Files</h3>
+                <div id="modified-files-list" class="event-log"></div>
+            </div>
+            <div class="panel">
+                <h3>Events</h3>
+                <div id="event-log" class="event-log"></div>
+            </div>
+
+        </aside>
+        
+        <!-- Settings Panel -->
+        <div id="settings-panel">
+            <h3>Galaxy Settings</h3>
+            <div class="slider-group">
+                <label>Disk Radius <span id="val-diskRadius">600</span></label>
+                <input type="range" id="slider-diskRadius" min="100" max="1000" value="600">
+            </div>
+            <div class="slider-group">
+                <label>Disk Height <span id="val-diskHeight">100</span></label>
+                <input type="range" id="slider-diskHeight" min="10" max="200" value="100">
+            </div>
+            <div class="slider-group">
+                <label>Edge Thinness <span id="val-thicknessFactor">0.65</span></label>
+                <input type="range" id="slider-thicknessFactor" min="1" max="100" value="65">
+            </div>
+            <div class="slider-group">
+                <label>Star Size <span id="val-starSize">1.0</span></label>
+                <input type="range" id="slider-starSize" min="5" max="30" value="10">
+            </div>
+            <div class="slider-group">
+                <label>Planet Size <span id="val-planetSize">0.8</span></label>
+                <input type="range" id="slider-planetSize" min="5" max="30" value="8">
+            </div>
+            
+            <h3 style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #8888a0; margin: 16px 0 12px;">Display Options</h3>
+            
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" id="toggle-axis" checked>
+                    <span>Axis & Grid</span>
+                    <small style="color: #5a5a70; font-size: 9px; display: block; margin-left: 24px;">中心轴 + XYZ 坐标环</small>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggle-rings">
+                    <span>Orbit Rings</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggle-connections" checked>
+                    <span>Connections</span>
+                </label>
+                <label>
+                    <input type="checkbox" id="toggle-focus-mode" checked>
+                    <span>Focus Mode</span>
+                    <small style="color: #5a5a70; font-size: 9px; display: block; margin-left: 24px;">Highlight connections on hover</small>
+                </label>
+            </div>
+            
+            <button id="btn-apply-settings" class="btn-rescan">重新扫描应用设置</button>
+        </div>
+        
+        <div id="loading-overlay" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading...</p>
+        </div>
+        
+        <!-- 标签容器 -->
+        <div id="label-container"></div>
+        
+        <!-- Path Selector -->
+        <div id="path-selector" style="
+            position: fixed;
+            top: 70px;
+            right: 16px;
+            background: rgba(18,18,26,0.98);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 16px;
+            z-index: 95;
+            min-width: 300px;
+        ">
+            <h3 style="font-size: 11px; color: #8888a0; margin-bottom: 12px;">SELECT PROJECT PATH</h3>
+            <input type="text" id="project-path" placeholder="e.g. C:\Projects\MyApp" style="
+                width: 100%;
+                padding: 8px 12px;
+                background: #1a1a25;
+                border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 6px;
+                color: #e0e0e8;
+                font-size: 12px;
+                margin-bottom: 8px;
+            ">
+            <button id="btn-scan" style="
+                width: 100%;
+                padding: 8px 16px;
+                background: #00d4ff;
+                border: none;
+                border-radius: 6px;
+                color: #050508;
+                font-weight: 600;
+                cursor: pointer;
+            ">Scan Project</button>
+            <p id="scan-status" style="font-size: 10px; color: #5a5a70; margin-top: 8px; text-align: center;"></p>
+        </div>
+    </div>
+    
+    <!-- 坐标显示 - 始终可见 -->
+    <!-- 文件详情浮层面板 -->
+    <div id="detail-panel" style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 440px;
+        background: rgba(16, 16, 26, 0.97);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 16px;
+        z-index: 2000;
+        display: none;
+        box-shadow: 0 16px 60px rgba(0,0,0,0.7);
+        backdrop-filter: blur(16px);
+        overflow: hidden;
+    ">
+        <!-- 头部 -->
+        <div style="
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: rgba(10,10,20,0.6);
+        ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span id="detail-file-icon" style="font-size: 22px;">📄</span>
+                <span id="detail-filename" style="font-weight: 700; font-size: 15px; color: #e0e0f0;"></span>
+            </div>
+            <button id="close-detail-panel" style="
+                background: none; border: none; color: #666680; font-size: 22px;
+                cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1;
+            ">&times;</button>
+        </div>
+
+        <!-- 文件路径 -->
+        <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <span id="detail-path" style="font-size: 11px; color: #5a5a70; font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+                <button id="detail-copy-path" style="
+                    background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3);
+                    color: #00d4ff; font-size: 10px; padding: 3px 8px; border-radius: 4px;
+                    cursor: pointer; white-space: nowrap;
+                ">Copy</button>
+            </div>
+        </div>
+
+        <!-- 核心指标 -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); padding: 16px 20px; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div style="text-align: center;">
+                <div id="detail-lines" style="font-size: 20px; font-weight: 700; color: #00d4ff; font-family: monospace;">--</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">行数</div>
+            </div>
+            <div style="text-align: center;">
+                <div id="detail-imports" style="font-size: 20px; font-weight: 700; color: #ffb74d; font-family: monospace;">--</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">导入</div>
+            </div>
+            <div style="text-align: center;">
+                <div id="detail-importers" style="font-size: 20px; font-weight: 700; color: #ba68c8; font-family: monospace;">--</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">被依赖</div>
+            </div>
+            <div style="text-align: center;">
+                <div id="detail-size" style="font-size: 20px; font-weight: 700; color: #80cbc4; font-family: monospace;">--</div>
+                <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px;">大小</div>
+            </div>
+        </div>
+
+        <!-- 函数和类 -->
+        <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px; margin-bottom: 8px;">
+                Functions &amp; Classes
+            </div>
+            <div style="display: flex; gap: 16px;">
+                <div>
+                    <span style="font-size: 11px; color: #5a5a70;">🔵</span>
+                    <span id="detail-functions" style="font-size: 12px; color: #e0e0f0; font-family: monospace;">--</span>
+                </div>
+                <div>
+                    <span style="font-size: 11px; color: #5a5a70;">🟣</span>
+                    <span id="detail-classes" style="font-size: 12px; color: #e0e0f0; font-family: monospace;">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 外部引用分布 -->
+        <div style="padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px; margin-bottom: 8px;">
+                外部引用
+            </div>
+            <div id="detail-ext-imports" style="display: flex; flex-wrap: wrap; gap: 6px;">
+                <span style="font-size: 11px; color: #5a5a70;">No Data</span>
+            </div>
+        </div>
+
+        <!-- Last Modified -->
+        <div style="padding: 10px 20px;">
+            <div style="font-size: 9px; text-transform: uppercase; color: #5a5a70; letter-spacing: 0.5px; margin-bottom: 4px;">
+                Last Modified
+            </div>
+            <div id="detail-modified" style="font-size: 11px; color: #8888a0;"></div>
+        </div>
+    </div>
+
+    <!-- 详情面板遮罩 -->
+    <div id="detail-overlay" style="
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.4); z-index: 1999; display: none;
+    "></div>
+
+    <div id="coords-footer" style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 8px; background: rgba(5,5,8,0.7); color: #fff; font-family: monospace; font-size: 12px; z-index: 100;">
+        <span id="coords-display">X: 0  Y: 0  Z: 0</span>
+    </div>
+    
+    <!-- 代码查看抽屉 -->
+    <div id="code-drawer" style="
+        position: fixed;
+        top: 0;
+        right: -520px;
+        width: 500px;
+        min-width: 300px;
+        max-width: 80vw;
+        height: 100vh;
+        background: rgba(18, 18, 26, 0.95);
+        border-left: 1px solid rgba(255,255,255,0.1);
+        z-index: 1000;
+        transition: right 0.4s ease;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(10px);
+    ">
+        <!-- 拖拽调整宽度的手柄 -->
+        <div id="drawer-resize-handle" style="
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            cursor: ew-resize;
+            background: transparent;
+            transition: background 0.2s;
+            z-index: 10;
+        "></div>
+        <!-- 抽屉头部 -->
+        <div style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            background: rgba(10,10,20,0.8);
+        ">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="drawer-file-icon" style="font-size: 20px;">📄</span>
+                <span id="drawer-filename" style="font-weight: 600; color: #00d4ff;">filename.py</span>
+            </div>
+            <button id="close-drawer" style="
+                background: none;
+                border: none;
+                color: #8888a0;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 4px 8px;
+                border-radius: 4px;
+                transition: all 0.2s;
+            ">&times;</button>
+        </div>
+        
+        <!-- 代码内容区 -->
+        <div id="code-content" style="
+            flex: 1;
+            overflow: auto;
+            padding: 16px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        ">
+            <!-- 加载中 -->
+            <div id="code-loading" style="
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 200px;
+                color: #8888a0;
+            ">
+                <span style="animation: pulse 1.5s infinite;">Loading code...</span>
+            </div>
+        </div>
+        
+        <!-- 抽屉底部 -->
+        <div style="
+            padding: 12px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            background: rgba(10,10,20,0.8);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        ">
+            <span id="drawer-path" style="font-size: 11px; color: #5a5a70; max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></span>
+            <span id="drawer-lines" style="font-size: 11px; color: #5a5a70;"></span>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        /* 拖拽调整宽度手柄 */
+        #drawer-resize-handle:hover {
+            background: rgba(0, 212, 255, 0.3) !important;
+        }
+        #drawer-resize-handle:active {
+            background: rgba(0, 212, 255, 0.5) !important;
+        }
+        /* Prism.js 自定义样式 */
+        #code-content pre {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+        #code-content code {
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace !important;
+            font-size: 13px !important;
+            line-height: 1.6 !important;
+        }
+        /* 滚动条样式 */
+        #code-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        #code-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        #code-content::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+        #code-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        #close-drawer:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+    </style>
+    
+    <!-- 恒星标签样式 -->
+    <style>
+        .star-label {
+            padding: 6px 12px;
+            background: rgba(10, 10, 20, 0.9);
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            border-radius: 6px;
+            color: #e0e0e8;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: auto;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .star-label:hover {
+            background: rgba(0, 212, 255, 0.25);
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
+        }
+        .star-label .filename {
+            font-weight: 600;
+            color: #00d4ff;
+        }
+        /* CSS2DRenderer container */
+        #label-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 500;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        #label-container * {
+            pointer-events: auto;
+        }
+        
+        /* 右键菜单 */
+        .context-menu {
+            position: fixed;
+            background: rgba(20, 20, 30, 0.95);
+            border: 1px solid rgba(100, 100, 150, 0.3);
+            border-radius: 8px;
+            padding: 6px 0;
+            min-width: 160px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        }
+        .context-menu.hidden {
+            display: none;
+        }
+        .context-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            cursor: pointer;
+            color: #e0e0e8;
+            font-size: 13px;
+            transition: background 0.15s;
+        }
+        .context-menu-item:hover {
+            background: rgba(0, 212, 255, 0.15);
+        }
+        .context-menu-item .icon {
+            font-size: 14px;
+        }
+    </style>
+
+    <!-- Three.js from CDN + Post Processing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    
+    <!-- Prism.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-jsx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-tsx.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/renderers/CSS2DRenderer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.134.0/examples/js/shaders/CopyShader.js"></script>
+    
+    <!-- Main App -->
+    <script>
+    // 全局星系配置
+    const GalaxyConfig = {
+        diskRadius: 600,       // 圆盘半径 - 增大让恒星更分散
+        diskHeight: 100,        // 中心厚度（Z轴最大范围）
+        thicknessFactor: 0.65,  // 边缘厚度因子
+        starSizeMult: 1.0,      // 恒星大小倍数
+        planetSizeMult: 0.8     // 行星大小倍数
+    };
+    
+    // 位置计算函数（提取出来供实时更新使用）
+    // 银河系圆盘分布：中心密、边缘疏的圆形盘状
+    function calculateStarPosition(name, config, data = {}) {
+        // Mulberry32 伪随机数生成器
+        const mulberry32 = (seed) => {
+            return function() {
+                let t = seed += 0x6D2B79F5;
+                t = Math.imul(t ^ t >>> 15, t | 1);
+                t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        };
+        
+        // 哈希函数
+        const hashFn = (str) => {
+            let h = 0;
+            for (let i = 0; i < str.length; i++) {
+                h = ((h << 5) - h) + str.charCodeAt(i);
+                h |= 0;
+            }
+            return Math.abs(h);
+        };
+        
+        const seed = hashFn(name);
+        const rng = mulberry32(seed);
+        
+        const r1 = rng();  // 半径
+        const r2 = rng();  // 角度
+        const r3 = rng();  // Y轴高度
+        
+        const { diskRadius, diskHeight, thicknessFactor } = config;
+        
+        const minRadius = Math.max(25, diskRadius * 0.05);
+        const maxRadius = diskRadius * 0.95;
+        
+        // 半径：平方根分布，中心密
+        const r = minRadius + (maxRadius - minRadius) * Math.sqrt(r1);
+        
+        // 角度：使用黄金角螺旋分布，确保均匀分隔不重叠
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5)); // ≈ 2.39996
+        const fileIndex = data._index || 0;
+        // 主要用黄金角螺旋 + 随机微扰动
+        const theta = fileIndex * goldenAngle + r2 * 0.5; // 黄金角螺旋 + 小随机
+        
+        const x = r * Math.cos(theta);
+        const z = r * Math.sin(theta);
+        
+        // Y轴高度
+        const normalizedR = r / diskRadius;
+        const maxHeight = diskHeight * (1 - (1 - thicknessFactor) * normalizedR * normalizedR);
+        const y = (r3 - 0.5) * 2 * maxHeight;
+        
+        return { x, y, z, hash: seed, orbitRadius: r, orbitAngle: theta };
+    }
+    
+    // Simple Star class
+    class Star {
+        constructor(data, scene, index = 0, total = 1) {
+            console.log('[Star] Creating:', data.name);
+            
+            const { diskRadius, diskHeight, thicknessFactor, starSizeMult, planetSizeMult } = GalaxyConfig;
+
+            const ext = data.ext || '.py';
+            // 文件类型色彩编码（专为深色宇宙背景设计，颜色鲜明有区分度）
+            const colorMap = {
+                // Python - 科技蓝
+                '.py': 0x00d4ff,
+                '.pyw': 0x00b8e6,
+
+                // TypeScript / TSX - 宝石蓝
+                '.ts': 0x4fc3f7,
+                '.tsx': 0x4fc3f7,
+
+                // JavaScript / JSX - 金黄
+                '.js': 0xffd740,
+                '.jsx': 0xffd740,
+
+                // Web 样式 - 紫罗兰
+                '.html': 0xff7043,
+                '.htm': 0xff7043,
+                '.css': 0xce93d8,
+                '.scss': 0xf48fb1,
+                '.sass': 0xf48fb1,
+                '.less': 0x80cbc4,
+
+                // 配置/数据 - 青绿
+                '.json': 0x80cbc4,
+                '.yaml': 0x66bb6a,
+                '.yml': 0x66bb6a,
+                '.toml': 0x4db6ac,
+                '.xml': 0xff8a65,
+
+                // 文档 - 冷白
+                '.md': 0xe8eaf6,
+                '.txt': 0xb0bec5,
+                '.rst': 0x90a4ae,
+
+                // 后端语言
+                '.go': 0x00bcd4,
+                '.rs': 0xff8a65,
+                '.java': 0xffb74d,
+                '.rb': 0xef5350,
+                '.php': 0x7986cb,
+                '.c': 0x90a4ae,
+                '.cpp': 0xff7043,
+                '.h': 0x78909c,
+                '.cs': 0x4caf50,
+
+                // Shell/脚本 - 亮绿
+                '.sh': 0xa5d6a7,
+                '.bash': 0xa5d6a7,
+                '.zsh': 0xa5d6a7,
+                '.ps1': 0x4fc3f7,
+                '.bat': 0x81c784,
+                '.cmd': 0x81c784,
+
+                // 其他语言
+                '.sql': 0xffb74d,
+                '.vue': 0x4db6ac,
+                '.svelte': 0xff7043,
+                '.dart': 0x4dd0e1,
+                '.swift': 0xff8a65,
+                '.kt': 0xba68c8,
+                '.lua': 0x7986cb,
+                '.r': 0x64b5f6,
+            };
+            
+            let color = colorMap[ext] || 0xffffff;  // 默认白色
+
+            // 计算大小：基于文件行数
+            const size = Math.max(1.5, Math.log10((data.lines || 10) + 1) * 2) * starSizeMult;
+
+            // 保存 hash 用于实时更新（传入 data 以便计算 imports 因子）
+            const posInfo = calculateStarPosition(data.name || 'file', GalaxyConfig, data);
+            this.hash = posInfo.hash;
+            // 注意：Y现在是高度轴，旋转时保持Y不变
+            
+            const { x, y, z } = posInfo;
+
+            const geometry = new THREE.SphereGeometry(size, 16, 16);
+            // 透明发光材质 - 更强的 emissiveIntensity 让 Bloom 效果更明显
+            const material = new THREE.MeshStandardMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 2.0,  // 增强发光强度
+                metalness: 0.0,
+                roughness: 0.2,
+                transparent: true,
+                opacity: 0.9
+            });
+            this.mesh = new THREE.Mesh(geometry, material);
+            this.mesh.position.set(x, y, z);
+            this.mesh.userData = data;
+            this.baseSize = size;
+            this.color = color;
+            
+            // 为每个恒星创建倾斜的圆环轨道
+            this.orbitRing = this.createOrbitRing(data.name, size);
+            // 确保 tilt 值已设置
+            if (this.orbitTiltX === undefined) {
+                // 如果 createOrbitRing 没有设置，使用默认值
+                const nameHash = Math.abs([...(data.name || 'file')].reduce((h, c) => ((h << 5) - h) + c.charCodeAt(0), 0));
+                this.orbitTiltX = ((nameHash / 0x7FFFFFFF) * 0.5 - 0.25) * Math.PI;
+                this.orbitTiltZ = (((nameHash >> 8) % 100 / 100 - 0.5) * Math.PI * 0.7);
+            }
+            // 遵循显示设置
+            if (window.app && window.app.showRings === false) {
+                this.orbitRing.visible = false;
+            }
+            this.mesh.add(this.orbitRing);
+            
+            // XZ平面旋转速度（加快5倍）
+            this.rotationSpeed = 0.015 + (posInfo.hash % 100) / 100 * 0.015;
+            this.currentAngle = Math.atan2(z, x);  // 保存当前角度（用于XZ平面）
+            // 固定轨道半径，确保恒星不碰撞
+            this.orbitRadius = posInfo.orbitRadius;
+
+            // 强制确保初始位置在正确的轨道上（防止计算误差）
+            this.mesh.position.x = posInfo.orbitRadius * Math.cos(this.currentAngle);
+            this.mesh.position.z = posInfo.orbitRadius * Math.sin(this.currentAngle);
+
+            // 添加行星（functions 和 classes）- 太阳系风格
+            this.planets = [];
+            this.planetGroup = new THREE.Group();
+            // 同步 planetGroup 的倾斜角度与 orbitRing
+            this.planetGroup.rotation.x = this.orbitTiltX;
+            this.planetGroup.rotation.z = this.orbitTiltZ;
+            this.mesh.add(this.planetGroup);
+
+            // 保存原始数据用于更新
+            this.functions = data.functions || [];
+            this.classes = data.classes || [];
+            
+            // 合并所有行星并分配轨道
+            const allPlanets = [
+                ...this.functions.map((fn, i) => ({ ...fn, type: 'function', originalIndex: i })),
+                ...this.classes.map((cls, i) => ({ ...cls, type: 'class', originalIndex: i }))
+            ];
+            
+            // 最小安全距离 = 恒星半径 + 2，确保行星不被吞没
+            const minOrbitRadius = size + 2;
+            // 最大轨道半径 = 恒星大小 * 4（减小距离）
+            const maxOrbitRadius = size * 4;
+            
+            allPlanets.forEach((item, i) => {
+                const planetSize = item.type === 'function' 
+                    ? Math.max(0.3, Math.log10((item.args?.length || 2) + 1) * 0.3) * planetSizeMult
+                    : Math.max(0.5, Math.log10((item.methods?.length || 2) + 1) * 0.4) * planetSizeMult;
+                
+                const planetGeo = new THREE.SphereGeometry(planetSize, 8, 8);
+                const planetColor = item.type === 'function' ? 0x00ffaa : 0xff66ff;
+                const planetMat = new THREE.MeshStandardMaterial({ 
+                    color: planetColor,
+                    emissive: planetColor,
+                    emissiveIntensity: 1.5,  // 增强发光
+                    metalness: 0.0,
+                    roughness: 0.2,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const planet = new THREE.Mesh(planetGeo, planetMat);
+
+                // 黄道面分布：行星在 XZ 平面上均匀分布
+                // 使用等比数列分配轨道半径，内圈密外圈疏
+                const t = allPlanets.length > 1 ? i / (allPlanets.length - 1) : 0.5;
+                const orbitRadius = minOrbitRadius + (maxOrbitRadius - minOrbitRadius) * Math.pow(t, 0.7);
+                
+                // 初始角度，错开分布
+                const startAngle = (i / allPlanets.length) * Math.PI * 2 + (item.hash || i * 137.5) * 0.01;
+                
+                // 行星位置（黄道面：XZ平面，Y=0）
+                planet.position.set(orbitRadius, 0, 0);
+                
+                // 保存轨道数据用于动画
+                planet.userData = { 
+                    type: item.type, 
+                    name: item.name,
+                    orbitRadius: orbitRadius,
+                    orbitSpeed: 0.5 / Math.sqrt(orbitRadius / minOrbitRadius),  // 开普勒第三定律简化版：速度与半径平方根成反比
+                    currentAngle: startAngle
+                };
+                
+                this.planetGroup.add(planet);
+                this.planets.push(planet);
+            });
+
+            // 创建标签
+            this.createLabel(data);
+
+            scene.add(this.mesh);
+            this.id = data.id;
+            this.data = data;
+            this.scene = scene;
+            
+            // 创建外部引用圆环
+            this.createImportRings(data, size, color);
+            
+            // 确保 mesh.userData.id 被设置（用于悬停检测）
+            this.mesh.userData.id = data.id;
+            
+            // 调试：确保初始位置正确
+            console.log(`[Star] ${data.name}: orbitRadius=${this.orbitRadius.toFixed(2)}, angle=${this.currentAngle.toFixed(4)}, pos=(${this.mesh.position.x.toFixed(2)}, ${this.mesh.position.y.toFixed(2)}, ${this.mesh.position.z.toFixed(2)})`);
+        }
+        
+        // 创建倾斜的圆环轨道 - 碎石带粒子效果
+        createOrbitRing(name, starSize) {
+            const ringGroup = new THREE.Group();
+            
+            // 基于文件名 hash 生成固定倾斜角度
+            let hash = 0;
+            for (let i = 0; i < (name || '').length; i++) {
+                hash = ((hash << 5) - hash) + name.charCodeAt(i);
+                hash |= 0;
+            }
+            const hashNorm = Math.abs(hash) / 0x7FFFFFFF;
+            
+            // 随机倾斜角度（0-60度）
+            this.orbitTiltX = (hashNorm * 0.5 - 0.25) * Math.PI;
+            this.orbitTiltZ = ((hash >> 8) % 100 / 100 - 0.5) * Math.PI * 0.7;
+            
+            // 圆环半径 = 恒星大小 * 8
+            const ringRadius = starSize * 8;
+            this.ringRadius = ringRadius;
+            
+            // ============ 碎石带粒子效果 ============
+            const particleCount = 400;  // 粒子数量（大幅减少）
+            const ringWidth = 0.3;       // 碎石带宽度（更窄）
+            
+            // 创建粒子位置数组
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+            const sizes = new Float32Array(particleCount);
+            
+            // 获取恒星颜色
+            const starColorHex = this.color;
+            const starColor = new THREE.Color(starColorHex);
+            
+            // Mulberry32 PRNG 用于粒子分布
+            const mulberry32 = (seed) => {
+                return function() {
+                    let t = seed += 0x6D2B79F5;
+                    t = Math.imul(t ^ t >>> 15, t | 1);
+                    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            };
+            
+            const rng = mulberry32(hash);
+            
+            for (let i = 0; i < particleCount; i++) {
+                // 随机角度 0-2π
+                const angle = rng() * Math.PI * 2;
+                
+                // 随机半径偏移（碎石带宽度内）
+                const radiusOffset = (rng() - 0.5) * ringWidth;
+                const r = ringRadius + radiusOffset;
+                
+                // 随机高度（薄薄的带状分布）
+                const heightOffset = (rng() - 0.5) * 0.08;
+                
+                // 转换为直角坐标
+                positions[i * 3] = Math.cos(angle) * r;
+                positions[i * 3 + 1] = heightOffset;
+                positions[i * 3 + 2] = Math.sin(angle) * r;
+                
+                // 颜色变化：降低亮度，减弱发光
+                const hsl = { h: 0, s: 0, l: 0 };
+                starColor.getHSL(hsl);
+                const brightness = 0.08 + rng() * 0.15;  // 8%-23% 亮度（更暗）
+                const saturation = 0.3 + rng() * 0.25;  // 30%-55% 饱和度（更暗）
+                const variedColor = new THREE.Color();
+                variedColor.setHSL(hsl.h, saturation, brightness);
+                
+                colors[i * 3] = variedColor.r;
+                colors[i * 3 + 1] = variedColor.g;
+                colors[i * 3 + 2] = variedColor.b;
+                
+                // 粒子大小变化（更小）
+                sizes[i] = 0.8 + rng() * 0.7;
+            }
+            
+            // 创建几何体
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            // 创建粒子材质
+            const material = new THREE.PointsMaterial({
+                size: 1.0,  // 稍微减小粒子大小
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.15,  // 降低透明度，更暗
+                sizeAttenuation: true,
+                blending: THREE.NormalBlending,  // 普通混合（减弱发光）
+                depthWrite: false
+            });
+            
+            // 创建粒子系统
+            const particles = new THREE.Points(geometry, material);
+            ringGroup.add(particles);
+            
+            // 设置倾斜角度
+            ringGroup.rotation.x = this.orbitTiltX;
+            ringGroup.rotation.z = this.orbitTiltZ;
+            
+            return ringGroup;
+        }
+        
+        // 创建外部引用圆环（碎石带粒子效果）
+        createImportRings(data, baseSize, starColor) {
+            const externalImports = data.external_imports || [];
+            const ringCount = externalImports.length;
+            
+            if (ringCount === 0) return;
+            
+            // 使用恒星颜色作为圆环颜色
+            const ringColor = new THREE.Color(starColor);
+            
+            // Mulberry32 PRNG 用于粒子分布
+            const mulberry32 = (seed) => {
+                return function() {
+                    let t = seed += 0x6D2B79F5;
+                    t = Math.imul(t ^ t >>> 15, t | 1);
+                    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            };
+            
+            for (let i = 0; i < ringCount; i++) {
+                // 减小间距：缩小半径范围
+                const minOrbitRadius = baseSize + 3;
+                const maxOrbitRadius = baseSize * 4;
+                const t = ringCount > 1 ? i / (ringCount - 1) : 0.5;
+                const ringRadius = minOrbitRadius + (maxOrbitRadius - minOrbitRadius) * Math.pow(t, 0.7);
+                
+                // ============ 碎石带粒子效果 ============
+                const particleCount = 500;  // 更多粒子形成更连续的环
+                const ringWidth = 0.15;      // 更窄的带宽
+                
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+                const baseAngles = new Float32Array(particleCount);  // 存储每个粒子的初始角度
+                
+                // 使用统一的恒星颜色
+                const rng = mulberry32(i * 12345);
+                
+                for (let j = 0; j < particleCount; j++) {
+                    // 随机角度 0-2π（存储为 base angle）
+                    const angle = rng() * Math.PI * 2;
+                    baseAngles[j] = angle;
+                    
+                    // 随机半径偏移
+                    const radiusOffset = (rng() - 0.5) * ringWidth;
+                    const r = ringRadius + radiusOffset;
+                    
+                    // 随机高度（更薄）
+                    const heightOffset = (rng() - 0.5) * 0.03;
+                    
+                    positions[j * 3] = Math.cos(angle) * r;
+                    positions[j * 3 + 1] = heightOffset;
+                    positions[j * 3 + 2] = Math.sin(angle) * r;
+                    
+                    // 颜色变化：适中亮度
+                    const hsl = { h: 0, s: 0, l: 0 };
+                    ringColor.getHSL(hsl);
+                    const brightness = 0.15 + rng() * 0.25;  // 15%-40% 亮度（适中）
+                    const saturation = 0.4 + rng() * 0.3;  // 40%-70% 饱和度
+                    const variedColor = new THREE.Color();
+                    variedColor.setHSL(hsl.h, saturation, brightness);
+                    
+                    colors[j * 3] = variedColor.r;
+                    colors[j * 3 + 1] = variedColor.g;
+                    colors[j * 3 + 2] = variedColor.b;
+                }
+                
+                const geometry = new THREE.BufferGeometry();
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                
+                // 存储粒子数量、初始角度和半径用于动画更新
+                const particleRadii = new Float32Array(particleCount);  // 每个粒子的半径
+                for (let j = 0; j < particleCount; j++) {
+                    const baseX = positions[j * 3];
+                    const baseZ = positions[j * 3 + 2];
+                    particleRadii[j] = Math.sqrt(baseX * baseX + baseZ * baseZ);
+                }
+                const particleData = { count: particleCount, baseAngles, particleRadii };
+                
+                const material = new THREE.PointsMaterial({
+                    size: 0.2,                  // 更小的粒子
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.25,               // 适中透明度
+                    sizeAttenuation: true,
+                    blending: THREE.NormalBlending,
+                    depthWrite: false
+                });
+                
+                const particles = new THREE.Points(geometry, material);
+                
+                // Import Ring 添加到 planetGroup，planetGroup 已有倾角
+                // 因此 Import Ring 的 local rotation 应为 (0,0,0)，继承 planetGroup 的倾斜
+                particles.rotation.x = 0;
+                particles.rotation.y = 0;
+                particles.rotation.z = 0;
+                
+                particles.userData = {
+                    isImportRing: true,
+                    ringIndex: i,
+                    orbitRadius: ringRadius,  // 存储轨道半径
+                    orbitSpeed: 0.3 / Math.sqrt(ringRadius / minOrbitRadius),  // 开普勒速度
+                    currentAngle: 0,  // 公转角度（初始为0）
+                    particleData  // 存储粒子初始角度数据
+                };
+                
+                // 添加到 planetGroup（与行星在同一个倾斜平面上）
+                this.planetGroup.add(particles);
+            }
+        }
+        
+        createLabel(data) {
+            // 创建 CSS2D 标签 - 只显示文件名
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'star-label';
+            
+            const filename = document.createElement('div');
+            filename.className = 'filename';
+            filename.textContent = data.name || 'Unknown';
+            
+            labelDiv.appendChild(filename);
+            
+            // 创建 CSS2DObject
+            this.label = new THREE.CSS2DObject(labelDiv);
+            this.label.position.set(0, this.baseSize + 5, 0);  // 标签在恒星上方
+            this.label.visible = false;  // 默认隐藏
+            this.mesh.add(this.label);
+            
+            // 存储原始数据用于打开文件夹
+            this.mesh.userData.path = data.path;
+            this.mesh.userData.name = data.name;
+        }
+        
+        setLabelVisible(visible) {
+            if (this.label) {
+                this.label.visible = visible;
+            }
+        }
+        
+        // 设置所有标签（用于 toggle 按钮）
+        setAlwaysVisible(visible) {
+            if (this.label) {
+                this.label.visible = visible;
+            }
+        }
+        
+        // 设置/恢复恒星颜色（修改时变红）
+        setGlowColor(color, intensity = 0.8) {
+            const glowColor = color || this.color;
+            this.mesh.material.emissive.setHex(glowColor);
+            this.mesh.material.emissiveIntensity = intensity;
+
+            // 启动红色脉冲 + 外扩光晕动画
+            this._startRedPulse();
+        }
+
+        // 红色脉冲闪烁动画（MODIFIED 效果）
+        // 效果：淡红光 + 外扩光晕球体（超出恒星本身一倍），闪烁较慢
+        _startRedPulse() {
+            if (this._pulseAnimId) return;
+
+            const mesh = this.mesh;
+            const startTime = performance.now();
+            const duration = 30000;
+
+            // 创建外扩淡红色光晕球体
+            const glowSize = (this.baseSize || 2) * 3;
+            const outerGlowGeo = new THREE.SphereGeometry(glowSize, 16, 16);
+            const outerGlowMat = new THREE.MeshBasicMaterial({
+                color: 0xff6b6b,  // 更淡的红色
+                transparent: true,
+                opacity: 0.3,
+                side: THREE.BackSide,
+                depthWrite: false
+            });
+            const outerGlowMesh = new THREE.Mesh(outerGlowGeo, outerGlowMat);
+            mesh.add(outerGlowMesh);
+            this._outerGlowMesh = outerGlowMesh;
+
+            const animate = (now) => {
+                const elapsed = now - startTime;
+                if (elapsed > duration || !this._pulseActive) {
+                    mesh.remove(outerGlowMesh);
+                    outerGlowGeo.dispose();
+                    outerGlowMat.dispose();
+                    this._outerGlowMesh = null;
+                    this._pulseAnimId = null;
+                    return;
+                }
+
+                // 恒星本身淡红光脉冲：0.5~1.8 强度，减慢（0.002）
+                const pulse = 0.5 + 1.3 * Math.abs(Math.sin(elapsed * 0.002));
+                mesh.material.emissiveIntensity = pulse;
+
+                // 外扩光晕：脉冲缩放 0.85~1.6，减慢（0.003）
+                const glowPulse = 0.85 + 0.75 * Math.abs(Math.sin(elapsed * 0.003));
+                outerGlowMesh.scale.set(glowPulse, glowPulse, glowPulse);
+                outerGlowMat.opacity = 0.12 + 0.2 * Math.abs(Math.sin(elapsed * 0.0025));
+
+                this._pulseAnimId = requestAnimationFrame(animate);
+            };
+
+            this._pulseActive = true;
+            this._pulseAnimId = requestAnimationFrame(animate);
+        }
+
+        // 恢复原始光晕颜色
+        resetGlowColor() {
+            this._pulseActive = false;
+            if (this._pulseAnimId) {
+                cancelAnimationFrame(this._pulseAnimId);
+                this._pulseAnimId = null;
+            }
+
+            // 清理外扩光晕
+            if (this._outerGlowMesh && this._outerGlowMesh.parent) {
+                this.mesh.remove(this._outerGlowMesh);
+                if (this._outerGlowMesh.geometry) this._outerGlowMesh.geometry.dispose();
+                if (this._outerGlowMesh.material) this._outerGlowMesh.material.dispose();
+                this._outerGlowMesh = null;
+            }
+
+            this.mesh.material.emissive.setHex(this.color);
+            this.mesh.material.emissiveIntensity = 2.0;
+        }
+        
+        // 设置暗淡效果（用于代码查看模式）- 完全隐藏不相干的恒星
+        setDimmed(dimmed) {
+            this.dimmed = dimmed;
+            if (dimmed) {
+                // 完全隐藏不相干的恒星
+                this.mesh.visible = false;
+                if (this.orbitRing) this.orbitRing.visible = false;
+                this.planets.forEach(p => p.visible = false);
+                if (this.label) this.label.visible = false;
+            } else {
+                // 恢复显示
+                this.mesh.visible = true;
+                if (this.orbitRing) this.orbitRing.visible = window.app?.showRings;
+                this.planets.forEach(p => p.visible = true);
+                // 恢复标签：根据 labelsVisible 状态决定是否显示
+                if (this.label) {
+                    this.label.visible = window.app?.labelsVisible || false;
+                }
+            }
+        }
+
+        // 实时更新位置（用于滑块拖动）
+        // 注意：这里直接用新的 orbitIndex 和 diskRadius 重新计算位置
+        updatePosition(config) {
+            // 重新计算位置，使用相同的逻辑但新的 config
+            const posInfo = calculateStarPosition(this.data.name || 'file', config);
+            
+            // 保持当前的旋转角度，只更新轨道半径
+            // currentAngle 保持不变，让恒星继续以当前角度旋转
+            this.orbitRadius = posInfo.orbitRadius;
+            
+            // 使用当前角度和新半径更新位置
+            this.mesh.position.x = this.orbitRadius * Math.cos(this.currentAngle);
+            this.mesh.position.y = posInfo.y;
+            this.mesh.position.z = this.orbitRadius * Math.sin(this.currentAngle);
+        }
+        
+        // 实时更新大小
+        updateSize(starSizeMult, planetSizeMult) {
+            const newSize = this.baseSize * starSizeMult;
+            
+            // 更新主星
+            this.mesh.geometry.dispose();
+            this.mesh.geometry = new THREE.SphereGeometry(newSize, 16, 16);
+            
+            // 更新行星轨道半径（保持相对位置）
+            const sizeRatio = newSize / this.baseSize;
+            const minOrbitRadius = newSize + 2;
+            const maxOrbitRadius = newSize * 4;
+            
+            this.planets.forEach((planet, i) => {
+                const t = this.planets.length > 1 ? i / (this.planets.length - 1) : 0.5;
+                planet.userData.orbitRadius = minOrbitRadius + (maxOrbitRadius - minOrbitRadius) * Math.pow(t, 0.7);
+                planet.userData.orbitSpeed = 0.5 / Math.sqrt(planet.userData.orbitRadius / minOrbitRadius);
+                
+                // 更新位置
+                const angle = planet.userData.currentAngle;
+                planet.position.x = planet.userData.orbitRadius * Math.cos(angle);
+                planet.position.z = planet.userData.orbitRadius * Math.sin(angle);
+                
+                // 更新大小
+                let basePlanetSize;
+                if (planet.userData.type === 'function') {
+                    basePlanetSize = Math.max(0.25, Math.log10((planet.userData.fnArgs || 2) + 1) * 0.25);
+                } else {
+                    basePlanetSize = Math.max(0.4, Math.log10((planet.userData.methods || 2) + 1) * 0.35);
+                }
+                const newPlanetSize = basePlanetSize * planetSizeMult;
+                planet.geometry.dispose();
+                planet.geometry = new THREE.SphereGeometry(newPlanetSize, 8, 8);
+            });
+        }
+
+        // 恒星旋转 + 行星绕轨
+        animate(delta) {
+            // 恒星在星系中移动（使用固定轨道半径，同心圆运动不碰撞）
+            this.currentAngle += this.rotationSpeed * delta;
+            this.mesh.position.x = this.orbitRadius * Math.cos(this.currentAngle);
+            this.mesh.position.z = this.orbitRadius * Math.sin(this.currentAngle);
+            
+            // 行星沿倾斜轨道公转
+            this.planets.forEach(planet => {
+                const { orbitRadius, orbitSpeed, currentAngle } = planet.userData;
+                const newAngle = currentAngle + orbitSpeed * delta;
+                planet.userData.currentAngle = newAngle;
+                
+                planet.position.x = orbitRadius * Math.cos(newAngle);
+                planet.position.y = 0;
+                planet.position.z = orbitRadius * Math.sin(newAngle);
+                
+                // 行星自转
+                planet.rotation.y += delta * 2;
+            });
+            
+            // Import Ring 绕轨公转（与行星同速同向，使用位置更新）
+            this.planetGroup.children.forEach(child => {
+                if (child.userData && child.userData.isImportRing) {
+                    const { orbitSpeed, currentAngle, particleData } = child.userData;
+                    const newAngle = currentAngle + orbitSpeed * delta;
+                    child.userData.currentAngle = newAngle;
+                    
+                    // 更新粒子位置实现公转
+                    const positions = child.geometry.attributes.position.array;
+                    const { count, baseAngles, particleRadii } = particleData;
+                    for (let j = 0; j < count; j++) {
+                        const baseAngle = baseAngles[j];
+                        const totalAngle = baseAngle + newAngle;
+                        const r = particleRadii[j];
+                        positions[j * 3] = Math.cos(totalAngle) * r;
+                        positions[j * 3 + 2] = Math.sin(totalAngle) * r;
+                    }
+                    child.geometry.attributes.position.needsUpdate = true;
+                }
+            });
+        }
+    }
+
+    // Main App
+    class CodeNebulaApp {
+        constructor() {
+            this.stars = new Map();
+            this.scene = null;
+            this.camera = null;
+            this.renderer = null;
+            this.labelRenderer = null;  // CSS2D 渲染器
+            this.raycaster = new THREE.Raycaster();
+            this.mouse = new THREE.Vector2();
+            this.hoveredStar = null;
+            this.stats = { files: 0, functions: 0, classes: 0 };
+            this.connectionPairs = [];  // 初始化连线数组
+            this.labelsVisible = false;  // 标签显示状态
+            // 显示选项状态
+            this.showAxis = true;
+            this.showRings = false;  // 默认关闭 Orbit Rings
+            this.showConnections = true;
+            this.focusMode = true;  // 专注模式：悬停时高亮连线（默认开启，非关联连线完全消失）
+            this.focusedStar = null;  // 当前悬停的恒星
+            this.codePreviewMode = false;  // 代码预览模式
+            this.lastTime = performance.now();
+            this.selectedStar = null;  // 当前选中的恒星（用于代码查看）
+            this.isAnimatingCamera = false;  // 是否正在镜头动画中
+            this.isAnimationPaused = false;  // 是否暂停动画
+            this.autoPaused = false;  // 是否由代码查看自动暂停的
+            this.init();
+        }
+
+        async init() {
+            try {
+                this.initScene();
+                this.initMouseEvents();
+                this.initWebSocket();
+                this.animate();
+                this.bindControls();
+                this.loadSettings(); // 加载保存的设置
+                console.log('CodeNebula Ready');
+            } catch (error) {
+                console.error('Init Error:', error);
+                document.getElementById('loading-overlay').innerHTML = 
+                    '<div style="color:#ef4444;text-align:center"><p>Init Failed</p><small>' + error.message + '</small></div>';
+            }
+        }
+        
+        // 保存设置到 localStorage
+        saveSettings() {
+            const settings = {
+                // Galaxy Settings
+                diskRadius: GalaxyConfig.diskRadius,
+                diskHeight: GalaxyConfig.diskHeight,
+                thicknessFactor: GalaxyConfig.thicknessFactor,
+                starSizeMult: GalaxyConfig.starSizeMult,
+                planetSizeMult: GalaxyConfig.planetSizeMult,
+                // Display Options
+                showAxis: this.showAxis,
+                showRings: this.showRings,
+                showConnections: this.showConnections,
+                focusMode: this.focusMode
+            };
+            localStorage.setItem('codeNebulaSettings', JSON.stringify(settings));
+        }
+        
+        // 从 localStorage 加载设置
+        loadSettings() {
+            const saved = localStorage.getItem('codeNebulaSettings');
+            if (!saved) return;
+            
+            try {
+                const settings = JSON.parse(saved);
+                
+                // Galaxy Settings
+                if (settings.diskRadius !== undefined) GalaxyConfig.diskRadius = settings.diskRadius;
+                if (settings.diskHeight !== undefined) GalaxyConfig.diskHeight = settings.diskHeight;
+                if (settings.thicknessFactor !== undefined) GalaxyConfig.thicknessFactor = settings.thicknessFactor;
+                if (settings.starSizeMult !== undefined) GalaxyConfig.starSizeMult = settings.starSizeMult;
+                if (settings.planetSizeMult !== undefined) GalaxyConfig.planetSizeMult = settings.planetSizeMult;
+                
+                // 更新滑块显示
+                document.getElementById('slider-diskRadius').value = GalaxyConfig.diskRadius;
+                document.getElementById('val-diskRadius').textContent = GalaxyConfig.diskRadius;
+                document.getElementById('slider-diskHeight').value = GalaxyConfig.diskHeight;
+                document.getElementById('val-diskHeight').textContent = GalaxyConfig.diskHeight;
+                document.getElementById('slider-thicknessFactor').value = Math.round(GalaxyConfig.thicknessFactor * 100);
+                document.getElementById('val-thicknessFactor').textContent = GalaxyConfig.thicknessFactor.toFixed(2);
+                document.getElementById('slider-starSize').value = Math.round(GalaxyConfig.starSizeMult * 10);
+                document.getElementById('val-starSize').textContent = GalaxyConfig.starSizeMult.toFixed(1);
+                document.getElementById('slider-planetSize').value = Math.round(GalaxyConfig.planetSizeMult * 10);
+                document.getElementById('val-planetSize').textContent = GalaxyConfig.planetSizeMult.toFixed(1);
+                
+                // Display Options
+                if (settings.showAxis !== undefined) {
+                    this.showAxis = settings.showAxis;
+                    if (this.axisGroup) this.axisGroup.visible = this.showAxis;
+                    document.getElementById('toggle-axis').checked = this.showAxis;
+                }
+                if (settings.showRings !== undefined) {
+                    this.showRings = settings.showRings;
+                    document.getElementById('toggle-rings').checked = this.showRings;
+                }
+                if (settings.showConnections !== undefined) {
+                    this.showConnections = settings.showConnections;
+                    if (this.connectionsGroup) this.connectionsGroup.visible = this.showConnections;
+                    document.getElementById('toggle-connections').checked = this.showConnections;
+                }
+                if (settings.focusMode !== undefined) {
+                    this.focusMode = settings.focusMode;
+                    document.getElementById('toggle-focus-mode').checked = this.focusMode;
+                }
+                
+                console.log('[Settings] Loaded from localStorage');
+            } catch (e) {
+                console.error('[Settings] Load error:', e);
+            }
+        }
+
+        initScene() {
+            const container = document.getElementById('canvas-container');
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            
+            this.scene = new THREE.Scene();
+            this.scene.background = new THREE.Color(0x0a0a1a);  // 深蓝紫色背景
+            
+            this.camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 50000);
+            this.camera.position.set(0, 0, 300);
+            
+            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer.setSize(w, h);
+            this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            this.renderer.toneMapping = THREE.ReinhardToneMapping;
+            this.renderer.toneMappingExposure = 1.5;
+            container.appendChild(this.renderer.domElement);
+            
+            // CSS2D 渲染器 - 用于显示标签
+            this.labelRenderer = new THREE.CSS2DRenderer();
+            this.labelRenderer.setSize(w, h);
+            this.labelRenderer.domElement.style.position = 'absolute';
+            this.labelRenderer.domElement.style.top = '0';
+            this.labelRenderer.domElement.style.left = '0';
+            this.labelRenderer.domElement.style.pointerEvents = 'none';
+            document.getElementById('label-container').appendChild(this.labelRenderer.domElement);
+            
+            // 添加光照 - 蓝色调环境光
+            const ambientLight = new THREE.AmbientLight(0x1a1a4d, 0.6);
+            this.scene.add(ambientLight);
+            const pointLight = new THREE.PointLight(0x8888ff, 0.8);
+            pointLight.position.set(100, 100, 100);
+            this.scene.add(pointLight);
+            
+            // Controls - 无阻挡模式
+            this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.enableDamping = true;
+            this.controls.enablePan = true;
+            this.controls.minDistance = 10;
+            this.controls.maxDistance = 20000;
+            this.controls.enableZoom = true;
+            this.controls.mouseButtons = {
+                LEFT: THREE.MOUSE.ROTATE,
+                MIDDLE: THREE.MOUSE.DOLLY,
+                RIGHT: THREE.MOUSE.PAN
+            };
+            
+            // Starfield - 星空背景
+            this.addStarfield();
+            
+            // 中轴线 - 恒星旋转的参照轴
+            this.addCentralAxis();
+            
+            this.addArmillarySphere();
+            
+            // Bloom Effect - 更强的霓虹星云效果
+            this.initPostProcessing();
+            
+            // Resize
+            window.addEventListener('resize', () => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                this.camera.aspect = w / h;
+                this.camera.updateProjectionMatrix();
+                this.renderer.setSize(w, h);
+                if (this.labelRenderer) {
+                    this.labelRenderer.setSize(w, h);
+                }
+                if (this.composer) {
+                    this.composer.setSize(w, h);
+                }
+            });
+        }
+        
+        initMouseEvents() {
+            const canvas = this.renderer.domElement;
+            const labelContainer = document.getElementById('label-container');
+            const contextMenu = document.getElementById('context-menu');
+            
+            // 保存当前右键点击的恒星
+            this.contextStar = null;
+            
+            // 鼠标移动 - 检测悬停（使用 capture 阶段，在 OrbitControls 之前处理）
+            document.addEventListener('mousemove', (event) => {
+                const rect = canvas.getBoundingClientRect();
+                this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            }, { capture: true });
+            
+            // 隐藏右键菜单（点击其他区域时）
+            document.addEventListener('click', (event) => {
+                if (!event.target.closest('#context-menu')) {
+                    contextMenu.classList.add('hidden');
+                }
+            });
+            
+            // 右键点击恒星或标签 - 显示菜单
+            const showContextMenu = (event) => {
+                event.preventDefault();
+                
+                // 检查是否点击在代码抽屉上
+                const drawer = document.getElementById('code-drawer');
+                if (event.target.closest('#code-drawer')) return;
+                
+                // Raycaster 检测 - 查找恒星
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const meshes = Array.from(this.stars.values())
+                    .filter(s => !s.dimmed)
+                    .map(s => s.mesh);
+                const intersects = this.raycaster.intersectObjects(meshes, true);
+                
+                if (intersects.length > 0) {
+                    // 找到所属的恒星
+                    let obj = intersects[0].object;
+                    while (obj && !obj.userData.id) {
+                        obj = obj.parent;
+                    }
+                    if (obj && obj.userData.id) {
+                        const star = this.stars.get(obj.userData.id);
+                        if (star && !star.dimmed) {
+                            this.contextStar = star;
+                            // 显示菜单
+                            contextMenu.style.left = event.clientX + 'px';
+                            contextMenu.style.top = event.clientY + 'px';
+                            contextMenu.classList.remove('hidden');
+                        }
+                    }
+                }
+            };
+            
+            // 标签右键点击
+            labelContainer.addEventListener('contextmenu', (event) => {
+                if (event.target.closest('.star-label')) {
+                    if (this.hoveredStar) {
+                        this.contextStar = this.hoveredStar;
+                        contextMenu.style.left = event.clientX + 'px';
+                        contextMenu.style.top = event.clientY + 'px';
+                        contextMenu.classList.remove('hidden');
+                        event.preventDefault();
+                    }
+                }
+            });
+            
+            // 画布右键点击
+            canvas.addEventListener('contextmenu', showContextMenu);
+            
+            // Right-click menu - Copy file path
+            document.getElementById('ctx-copy-path').addEventListener('click', () => {
+                if (this.contextStar) {
+                    const data = this.contextStar.mesh.userData;
+                    if (data && data.path) {
+                        navigator.clipboard.writeText(data.path).then(() => {
+                            this.showToast(`Path copied: ${data.path}`);
+                        }).catch(err => {
+                            console.error('Copy failed:', err);
+                        });
+                    }
+                }
+                contextMenu.classList.add('hidden');
+            });
+            
+            // 右键菜单项点击 - 查看代码
+            document.getElementById('ctx-view-code').addEventListener('click', () => {
+                if (this.contextStar) {
+                    this.openStarCode(this.contextStar);
+                }
+                contextMenu.classList.add('hidden');
+            });
+
+            // 右键菜单项点击 - 文件详情
+            document.getElementById('ctx-view-details').addEventListener('click', () => {
+                if (this.contextStar) {
+                    this.openDetailPanel(this.contextStar);
+                }
+                contextMenu.classList.add('hidden');
+            });
+        }
+        
+        // 打开恒星代码查看
+        async openStarCode(star) {
+            console.log('[App] Opening code for:', star.data.name);
+            
+            // 0. 自动暂停动画（如果还没暂停）
+            if (!this.isAnimationPaused) {
+                this.autoPaused = true;  // 标记为自动暂停
+                this.isAnimationPaused = true;
+            }
+            
+            // 0.5. 进入代码预览模式
+            this.codePreviewMode = true;
+            
+            // 1. 记录当前选中的恒星
+            this.selectedStar = star;
+            
+            // 1.5. 保存原始相机位置（用于关闭时恢复）
+            this.originalCameraPosition = this.camera.position.clone();
+            this.originalControlsTarget = this.controls.target.clone();
+            
+            // 2. 淡化其他物体
+            this.fadeOtherObjects(star);
+            
+            // 3. 镜头飞向动画
+            this.flyToStar(star);
+            
+            // 4. 显示抽屉
+            this.showCodeDrawer(star);
+            
+            // 5. 懒加载代码
+            await this.loadStarCode(star);
+        }
+        
+        // 淡化其他物体 - 完全隐藏不相干的恒星和连线
+        fadeOtherObjects(selectedStar) {
+            // 获取选中恒星的相关恒星（连接关系）
+            const relatedStarIds = new Set();
+            relatedStarIds.add(selectedStar.data.id);
+            
+            // 找出所有与选中恒星有连接关系的恒星
+            this.connectionPairs.forEach(conn => {
+                if (conn.star1Id === selectedStar.data.id || conn.star2Id === selectedStar.data.id) {
+                    relatedStarIds.add(conn.star1Id);
+                    relatedStarIds.add(conn.star2Id);
+                }
+            });
+            
+            // 完全隐藏不相干的恒星
+            this.stars.forEach((star, id) => {
+                const isRelated = relatedStarIds.has(id);
+                star.setDimmed(!isRelated);
+            });
+            
+            // 只保留与选中恒星相关的连线，隐藏其他的
+            this.connectionPairs.forEach(conn => {
+                // 判断这条连线是否与选中恒星相关
+                const isRelated = conn.star1Id === selectedStar.data.id || 
+                                conn.star2Id === selectedStar.data.id;
+                if (conn.group) {
+                    conn.group.visible = isRelated;
+                }
+            });
+            
+            // 隐藏中轴线
+            if (this.axisGroup) {
+                this.axisGroup.visible = false;
+            }
+        }
+        
+        // 恢复所有物体
+        restoreAllObjects() {
+            // 退出代码预览模式
+            this.codePreviewMode = false;
+            
+            // 恢复恒星
+            this.stars.forEach(star => star.setDimmed(false));
+            
+            // 恢复所有连线
+            this.connectionPairs.forEach(conn => {
+                if (conn.group) {
+                    conn.group.visible = true;
+                }
+            });
+            
+            // 恢复中轴线
+            if (this.axisGroup) {
+                this.axisGroup.visible = this.showAxis;
+            }
+        }
+        
+        // 镜头飞向动画
+        flyToStar(star) {
+            const targetPos = star.mesh.position.clone();
+            const currentPos = this.camera.position.clone();
+            
+            // 计算目标位置（在恒星上方和侧面）
+            const direction = targetPos.clone().normalize();
+            const offset = direction.multiplyScalar(-80).add(new THREE.Vector3(0, 50, 0));
+            const targetCameraPos = targetPos.clone().add(offset);
+            
+            // 动画参数
+            const duration = 800; // ms
+            const startTime = performance.now();
+            
+            this.isAnimatingCamera = true;
+            
+            const animate = () => {
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // 缓动函数
+                const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+                const t = easeOutCubic(progress);
+                
+                // 插值位置
+                this.camera.position.lerpVectors(currentPos, targetCameraPos, t);
+                this.controls.target.lerpVectors(this.controls.target, targetPos, t);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    this.isAnimatingCamera = false;
+                }
+            };
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 显示代码抽屉
+        showCodeDrawer(star) {
+            const drawer = document.getElementById('code-drawer');
+            const filename = document.getElementById('drawer-filename');
+            const filePath = document.getElementById('drawer-path');
+            const lines = document.getElementById('drawer-lines');
+            
+            // 设置文件信息
+            filename.textContent = star.data.name || 'Unknown';
+            filePath.textContent = star.data.path || '';
+            lines.textContent = `${star.data.lines || 0} lines`;
+            
+            // 设置文件图标
+            const icon = document.getElementById('drawer-file-icon');
+            const ext = star.data.ext || '';
+            const iconMap = {
+                '.py': '🐍', '.js': '📜', '.ts': '📘', '.jsx': '⚛️', '.tsx': '⚛️',
+                '.html': '🌐', '.css': '🎨', '.json': '📋', '.md': '📝'
+            };
+            icon.textContent = iconMap[ext] || '📄';
+            
+            // 显示抽屉
+            drawer.style.right = '0';
+        }
+        
+        // 关闭代码抽屉
+        closeCodeDrawer() {
+            const drawer = document.getElementById('code-drawer');
+            // 使用实际宽度来关闭抽屉
+            const drawerWidth = drawer.offsetWidth;
+            drawer.style.right = `-${drawerWidth}px`;
+
+            // 如果有保存的原始相机位置，恢复相机
+            if (this.originalCameraPosition && this.originalControlsTarget) {
+                this.flyToPosition(this.originalCameraPosition, this.originalControlsTarget);
+            }
+
+            // 延迟恢复场景（等抽屉动画完成）
+            setTimeout(() => {
+                this.restoreAllObjects();
+                this.selectedStar = null;
+
+                // 如果是自动暂停的，自动恢复动画
+                if (this.autoPaused) {
+                    this.autoPaused = false;
+                    this.isAnimationPaused = false;
+                }
+            }, 400);
+        }
+
+        // 打开文件详情浮层面板
+        openDetailPanel(star) {
+            const panel = document.getElementById('detail-panel');
+            const overlay = document.getElementById('detail-overlay');
+
+            const data = star.data;
+            const ext = data.ext || '';
+
+            // 文件名和图标
+            document.getElementById('detail-filename').textContent = data.name || 'Unknown';
+            const iconMap = {
+                '.py': '🐍', '.js': '📜', '.ts': '📘', '.jsx': '⚛️', '.tsx': '⚛️',
+                '.html': '🌐', '.css': '🎨', '.json': '📋', '.md': '📝',
+                '.yaml': '⚙️', '.yml': '⚙️', '.sh': '💻', '.go': '🔵',
+                '.rs': '🦀', '.java': '☕', '.rb': '💎', '.vue': '💚',
+            };
+            document.getElementById('detail-file-icon').textContent = iconMap[ext] || '📄';
+
+            // 文件路径
+            document.getElementById('detail-path').textContent = data.path || '';
+
+            // 核心指标
+            document.getElementById('detail-lines').textContent = data.lines || 0;
+            document.getElementById('detail-imports').textContent = (data.imports || []).length;
+            document.getElementById('detail-size').textContent = this._formatSize(data.size || 0);
+
+
+            // 计算被依赖数量：其他文件引用了当前文件（去重）
+            const relatedIds = new Set();
+            this.connectionPairs.forEach(conn => {
+                // star1 是 importer，star2 是被引用方
+                // 如果 star1 === 当前文件，说明当前文件引用了别人，不算被依赖
+                // 如果 star2 === 当前文件，说明别人引用了当前文件，算被依赖
+                if (conn.star2Id === starId) {
+                    relatedIds.add(conn.star1Id);
+                }
+            });
+            document.getElementById('detail-importers').textContent = relatedIds.size;
+
+            // 函数和类
+            const fns = data.functions || [];
+            const cls = data.classes || [];
+            document.getElementById('detail-functions').textContent = fns.length > 0 ? `${fns.length} 个函数` : '—';
+            document.getElementById('detail-classes').textContent = cls.length > 0 ? `${cls.length} 个类` : '—';
+
+            // 外部引用分类展示
+            const extImports = data.external_imports || [];
+            const extContainer = document.getElementById('detail-ext-imports');
+            if (extImports.length === 0) {
+                extContainer.innerHTML = '<span style="font-size:11px;color:#5a5a70;">无外部依赖</span>';
+            } else {
+                const typeColors = {
+                    'framework': { color: '#fbbf24', label: '框架' },
+                    'builtin':   { color: '#60a5fa', label: '内置' },
+                    'thirdparty':{ color: '#f87171', label: '第三方' },
+                    'other':     { color: '#c084fc', label: '其他' },
+                };
+                const frameworkPatterns = ['react', 'vue', 'angular', 'next', 'nuxt', 'fastapi', 'fastapi', 'flask', 'django', 'express', 'koa', 'nestjs', 'prisma', 'mongoose', 'axios', 'swr', 'redux', 'zustand', 'tanstack', 'remix'];
+                const builtinPatterns = ['os', 'sys', 'json', 're', 'math', 'time', 'datetime', 'collections', 'itertools', 'functools', 'random', 'uuid', 'hashlib', 'pathlib', 'typing', 'abc', 'copy', 'io', 'warnings', 'traceback', 'logging', 'threading', 'asyncio', 'http', 'urllib', 'html', 'xml', 'csv', 'argparse', 'subprocess', 'pickle', 'sqlite3', 'zipfile', 'tarfile', 'gzip', 'shutil', 'glob', 'fnmatch', 'tempfile', 'ast', 'inspect', 'platform', 'path', 'fs', 'http', 'https', 'url', 'querystring', 'crypto', 'stream', 'events', 'util', 'assert', 'buffer', 'child_process', 'cluster', 'dns', 'zlib', 'readline', 'timers', 'console', 'process', 'async', 'events', 'fs', 'path', 'os'];
+                const thirdPatterns = ['lodash', 'underscore', 'moment', 'dayjs', 'date-fns', 'axios', 'node-fetch', 'express', 'koa', 'fastify', 'hapi', 'mongoose', 'sequelize', 'typeorm', 'prisma', 'dotenv', 'yargs', 'commander', 'chalk', 'ora', 'minimist', 'meow', 'jest', 'mocha', 'chai', 'eslint', 'webpack', 'babel', 'typescript', 'vite', 'esbuild', 'rollup', 'sass', 'less', 'styled-components', 'emotion', 'tailwind', 'clsx', 'classnames', 'dayjs', 'uuid', 'nanoid', 'zod', 'yup', 'joi'];
+
+                const classified = extImports.map(imp => {
+                    const top = imp.split('.')[0].split('/')[0].replace('@', '');
+                    if (frameworkPatterns.some(p => top.includes(p))) return { name: imp, type: 'framework' };
+                    if (builtinPatterns.some(p => top === p)) return { name: imp, type: 'builtin' };
+                    if (thirdPatterns.some(p => top === p)) return { name: imp, type: 'thirdparty' };
+                    return { name: imp, type: 'other' };
+                });
+
+                const displayItems = classified.slice(0, 12);
+                const more = classified.length > 12 ? ` <span style="color:#5a5a70;">+${classified.length - 12} more</span>` : '';
+                extContainer.innerHTML = displayItems.map(({ name, type }) => {
+                    const tc = typeColors[type];
+                    return `<span style="
+                        display:inline-flex; align-items:center; gap:4px;
+                        background: ${tc.color}22; border: 1px solid ${tc.color}55;
+                        padding: 2px 8px; border-radius: 20px; font-size: 11px; color: ${tc.color};
+                    ">${name}</span>`;
+                }).join('') + more;
+            }
+
+            // 最后修改时间
+            document.getElementById('detail-modified').textContent = data.path ? '通过 WebSocket 实时监控' : '—';
+
+            // 显示
+            overlay.style.display = 'block';
+            panel.style.display = 'block';
+        }
+
+        // 格式化文件大小
+        _formatSize(bytes) {
+            if (bytes < 1024) return bytes + 'B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + 'KB';
+            return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+        }
+
+        // 关闭详情面板
+        closeDetailPanel() {
+            document.getElementById('detail-panel').style.display = 'none';
+            document.getElementById('detail-overlay').style.display = 'none';
+        }
+        
+        // 镜头飞向指定位置（用于恢复原位）
+        flyToPosition(targetPosition, targetLookAt) {
+            const currentPos = this.camera.position.clone();
+            const currentTarget = this.controls.target.clone();
+            
+            const duration = 600; // ms
+            const startTime = performance.now();
+            
+            this.isAnimatingCamera = true;
+            
+            const animate = () => {
+                const elapsed = performance.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // 缓动函数
+                const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+                const t = easeOutCubic(progress);
+                
+                // 插值位置
+                this.camera.position.lerpVectors(currentPos, targetPosition, t);
+                this.controls.target.lerpVectors(currentTarget, targetLookAt, t);
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    this.isAnimatingCamera = false;
+                    // 清除保存的位置
+                    this.originalCameraPosition = null;
+                    this.originalControlsTarget = null;
+                }
+            };
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // 懒加载代码内容
+        async loadStarCode(star) {
+            const codeContent = document.getElementById('code-content');
+            
+            try {
+                const path = star.data.path;
+                console.log('[App] Loading code for path:', path);
+                
+                if (!path) {
+                    codeContent.innerHTML = `<div style="color: #ef4444; padding: 20px;">Error: No file path available</div>`;
+                    return;
+                }
+                
+                const response = await fetch('/api/file-content?path=' + encodeURIComponent(path));
+                const data = await response.json();
+                
+                console.log('[App] API response:', data);
+                
+                if (data.error) {
+                    codeContent.innerHTML = `<div style="color: #ef4444; padding: 20px;">Error: ${data.error}</div>`;
+                    return;
+                }
+                
+                // 检查 content 是否存在
+                if (!data.content && data.content !== '') {
+                    codeContent.innerHTML = `<div style="color: #ef4444; padding: 20px;">Error: No content available (path: ${path})</div>`;
+                    return;
+                }
+                
+                // 生成行号
+                const lines = data.content.split('\n');
+                
+                // 获取语言标识
+                const langMap = {
+                    '.py': 'python', '.js': 'javascript', '.ts': 'typescript',
+                    '.jsx': 'jsx', '.tsx': 'tsx', '.html': 'html', '.css': 'css'
+                };
+                const lang = langMap[data.ext] || 'javascript';
+                
+                // 更新抽屉标题
+                document.getElementById('drawer-filename').textContent = data.name;
+                document.getElementById('drawer-lines').textContent = `${lines.length} lines`;
+                
+                // 渲染代码（使用 Prism 高亮）
+                codeContent.innerHTML = `
+                    <div class="code-container" style="display: flex;">
+                        <div class="line-numbers" style="
+                            color: #5a5a70;
+                            text-align: right;
+                            padding-right: 16px;
+                            user-select: none;
+                            border-right: 1px solid rgba(255,255,255,0.1);
+                            margin-right: 16px;
+                            font-family: 'Fira Code', 'Consolas', monospace;
+                        ">${lines.map((_, i) => `<div style="height: 20.8px;">${i + 1}</div>`).join('')}</div>
+                        <pre class="language-${lang}" style="margin: 0; flex: 1; overflow-x: auto;"><code class="language-${lang}">${this.escapeHtml(data.content)}</code></pre>
+                    </div>
+                `;
+                
+                // 应用 Prism 高亮
+                Prism.highlightAllUnder(codeContent);
+                
+                // 添加行高样式
+                const style = document.createElement('style');
+                style.textContent = `
+                    .code-container code { line-height: 1.6 !important; }
+                    .code-container .token-line { height: 20.8px !important; }
+                `;
+                codeContent.appendChild(style);
+                
+            } catch (err) {
+                console.error('[App] Failed to load code:', err);
+                codeContent.innerHTML = `<div style="color: #ef4444; padding: 20px;">Failed to load code: ${err.message}</div>`;
+            }
+        }
+        
+        // HTML 转义
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        openFileFolder(filePath) {
+            // 通过后端 API 打开文件所在文件夹
+            console.log('[CodeNebula] Opening folder for:', filePath);
+            const url = '/api/open-folder?path=' + encodeURIComponent(filePath);
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error('[CodeNebula] Failed to open folder:', data.error);
+                    } else {
+                        console.log('[CodeNebula] Folder opened successfully');
+                    }
+                })
+                .catch(err => console.error('[CodeNebula] Error opening folder:', err));
+        }
+        
+        // 显示提示信息
+        showToast(message, duration = 2000) {
+            // 移除已有的 toast
+            const existingToast = document.getElementById('toast-notification');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            // 创建 toast 元素
+            const toast = document.createElement('div');
+            toast.id = 'toast-notification';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 50px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(20, 20, 30, 0.95);
+                color: #00d4ff;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 13px;
+                z-index: 9999;
+                border: 1px solid rgba(0, 212, 255, 0.3);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+                max-width: 80vw;
+                text-align: center;
+                word-break: break-all;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // 自动移除
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+        
+        initPostProcessing() {
+            this.composer = new THREE.EffectComposer(this.renderer);
+            
+            const renderPass = new THREE.RenderPass(this.scene, this.camera);
+            this.composer.addPass(renderPass);
+            
+            // Bloom - 发光效果
+            const bloomPass = new THREE.UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                1.0,   // strength - 降低发光强度，减少粒子干扰
+                0.4,   // radius - 适中光晕范围
+                0.3    // threshold - 适当提高阈值
+            );
+            this.composer.addPass(bloomPass);
+            this.bloomPass = bloomPass;
+        }
+
+        addStarfield() {
+            // 星空背景：确保在文件恒星之外（文件恒星最大半径约 552）
+            const count = 2500;
+            const positions = new Float32Array(count * 3);
+            const colors = new Float32Array(count * 3);
+            const sizes = new Float32Array(count);
+            
+            // 背景星星最小半径
+            const minR = 600;
+            const maxR = 1400;
+            
+            for (let i = 0; i < count; i++) {
+                // 球形分布，从更远处开始
+                const r = minR + Math.random() * (maxR - minR);
+                const t = Math.random() * Math.PI * 2;
+                const p = Math.acos(2 * Math.random() - 1);
+                positions[i*3] = r * Math.sin(p) * Math.cos(t);
+                positions[i*3+2] = r * Math.sin(p) * Math.sin(t);
+                positions[i*3+1] = r * Math.cos(p);
+                
+                // 50% 发光星星（更亮更大），50% 普通星星
+                const isGlowing = Math.random() < 0.5;
+                
+                if (isGlowing) {
+                    // 发光星星：纯白高亮
+                    colors[i*3] = 1.0;
+                    colors[i*3+1] = 1.0;
+                    colors[i*3+2] = 1.0;
+                    sizes[i] = 5.0 + Math.random() * 3.0; // 5.0-8.0，更大
+                } else {
+                    // 普通星星：多彩色调
+                    const colorChoice = Math.random();
+                    if (colorChoice < 0.4) {
+                        colors[i*3] = 0.6; colors[i*3+1] = 0.7; colors[i*3+2] = 1.0; // 蓝色
+                    } else if (colorChoice < 0.7) {
+                        colors[i*3] = 0.9; colors[i*3+1] = 0.9; colors[i*3+2] = 1.0; // 白色
+                    } else {
+                        colors[i*3] = 1.0; colors[i*3+1] = 0.7; colors[i*3+2] = 0.8; // 粉色
+                    }
+                    sizes[i] = 2.5 + Math.random() * 1.5; // 2.5-4.0，调大
+                }
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+            
+            // 使用自定义着色器实现发光效果
+            const mat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) }
+                },
+                vertexShader: `
+                    attribute float size;
+                    attribute vec3 color;
+                    varying vec3 vColor;
+                    uniform float uPixelRatio;
+                    
+                    void main() {
+                        vColor = color;
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = size * uPixelRatio * (300.0 / -mvPosition.z);
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    
+                    void main() {
+                        // 创建圆形星星，带发光边缘
+                        float dist = length(gl_PointCoord - vec2(0.5));
+                        if (dist > 0.5) discard;
+                        
+                        // 中心亮、边缘暗的发光效果
+                        float glow = 1.0 - smoothstep(0.0, 0.5, dist);
+                        float core = 1.0 - smoothstep(0.0, 0.15, dist);
+                        
+                        vec3 finalColor = vColor * (glow * 0.6 + core * 0.4);
+                        float alpha = glow * 0.7 + core * 0.3;
+                        
+                        gl_FragColor = vec4(finalColor, alpha);
+                    }
+                `,
+                transparent: true,
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
+            });
+            
+            this.scene.add(new THREE.Points(geo, mat));
+        }
+
+        addCentralAxis() {
+            // 中轴线组
+            this.axisGroup = new THREE.Group();
+            this.scene.add(this.axisGroup);
+
+            // 主轴线：细线
+            const axisLength = 250;
+            const axisGeometry = new THREE.BufferGeometry();
+            const axisPositions = new Float32Array([
+                0, -axisLength, 0,
+                0, axisLength, 0
+            ]);
+            axisGeometry.setAttribute('position', new THREE.BufferAttribute(axisPositions, 3));
+
+            const axisMaterial = new THREE.LineBasicMaterial({
+                color: 0x4a9eff,
+                transparent: true,
+                opacity: 0.7
+            });
+
+            const axisLine = new THREE.Line(axisGeometry, axisMaterial);
+            this.axisGroup.add(axisLine);
+        }
+
+        // ==================== 空心圆球罗盘仪 (Armillary Sphere) ====================
+        // X/Y/Z 轴坐标环，大而细
+        addArmillarySphere() {
+            this.armillaryGroup = new THREE.Group();
+            this.armillaryGroup.visible = true;
+            this.scene.add(this.armillaryGroup);
+            
+            const ringRadius = 30;  // 较大范围
+            const tubeRadius = 0.12;  // 很细的管
+            const ringSegments = 64;
+            const tubeSegments = 8;
+            
+            // 发光材质
+            const createRingMaterial = (color) => new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            
+            // X 轴环 - 红色
+            const xRingGeo = new THREE.TorusGeometry(ringRadius, tubeRadius, tubeSegments, ringSegments);
+            const xRingMat = createRingMaterial(0xff4466);
+            const xRing = new THREE.Mesh(xRingGeo, xRingMat);
+            xRing.rotation.y = Math.PI / 2;
+            this.armillaryGroup.add(xRing);
+            
+            // Y 轴环 - 绿色
+            const yRingGeo = new THREE.TorusGeometry(ringRadius, tubeRadius, tubeSegments, ringSegments);
+            const yRingMat = createRingMaterial(0x44ff88);
+            const yRing = new THREE.Mesh(yRingGeo, yRingMat);
+            yRing.rotation.x = Math.PI / 2;
+            this.armillaryGroup.add(yRing);
+            
+            // Z 轴环 - 蓝色（标准直角坐标系，0°）
+            const zRingGeo = new THREE.TorusGeometry(ringRadius, tubeRadius, tubeSegments, ringSegments);
+            const zRingMat = createRingMaterial(0x4488ff);
+            const zRing = new THREE.Mesh(zRingGeo, zRingMat);
+            zRing.rotation.x = 0; // 标准直角坐标系
+            this.armillaryGroup.add(zRing);
+            
+            // 静态罗盘仪，不旋转
+            this.armillaryGroup.userData.autoRotate = false;
+        }
+
+        initWebSocket() {
+            const ws = new WebSocket('ws://localhost:8000/ws');
+            this.ws = ws;
+
+            ws.onopen = () => {
+                console.log('[WS] Connected');
+                document.getElementById('ws-status').classList.add('connected');
+                document.querySelector('#ws-status .status-text').textContent = 'Connected';
+                document.getElementById('loading-overlay').classList.add('hidden');
+
+                // 请求当前状态
+                setTimeout(() => {
+                    ws.send(JSON.stringify({ type: 'get_state' }));
+                    console.log('[WS] Sent get_state request');
+                }, 100);
+            };
+            
+            ws.onclose = () => {
+                document.getElementById('ws-status').classList.remove('connected');
+                document.querySelector('#ws-status .status-text').textContent = 'Disconnected';
+            };
+            
+            ws.onerror = (e) => console.error('WS Error:', e);
+            
+            ws.onmessage = (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    console.log('[WS] Received:', event.type, event);
+                    this.handleEvent(event);
+                } catch (err) {
+                    console.error('Parse Error:', err);
+                }
+            };
+            
+            // Scan button handler
+            document.getElementById('btn-scan').addEventListener('click', () => {
+                const path = document.getElementById('project-path').value.trim();
+                if (!path) {
+                    document.getElementById('scan-status').textContent = 'Please enter a path';
+                    return;
+                }
+                this.scanProject(path);
+            });
+            
+            this.ws = ws;
+        }
+
+        async scanProject(path) {
+            try {
+                document.getElementById('scan-status').textContent = 'Scanning...';
+                console.log('Scanning path:', path);
+                const url = '/api/scan?path=' + encodeURIComponent(path);
+                console.log('Fetching:', url);
+                const res = await fetch(url);
+                console.log('Response status:', res.status);
+                const data = await res.json();
+                console.log('Data received:', data.count, 'files');
+                
+                if (data.error) {
+                    document.getElementById('scan-status').textContent = 'Error: ' + data.error;
+                    return;
+                }
+                
+                // Clear existing stars
+                this.stars.forEach(s => s.mesh.removeFromParent());
+                this.stars.clear();
+                
+                // Add new stars with index info for spiral distribution
+                if (data.stars) {
+                    console.log('Adding stars:', data.stars.length);
+                    const total = data.stars.length;
+                    data.stars.forEach((s, i) => {
+                        s._index = i;
+                        s._total = total;
+                        this.addStar(s);
+                    });
+                }
+                
+                this.stats.files = data.count || 0;
+                this.updateStats();
+                document.getElementById('scan-status').textContent = 'Found ' + this.stats.files + ' files';
+                
+            } catch (err) {
+                console.error('Scan Error:', err);
+                document.getElementById('scan-status').textContent = 'Error: ' + err.message;
+            }
+        }
+
+        handleEvent(event) {
+            console.log('[App] handleEvent:', event);
+
+            // Update scan status
+            if (event.type === 'INIT') {
+                document.getElementById('scan-status').textContent = 'Found ' + (event.count || 0) + ' files';
+            }
+
+            // 处理 MODIFIED 事件：红色光晕 + 列表更新
+            if (event.type === 'MODIFIED' && event.star) {
+                this.handleModifiedFile(event.star);
+            }
+
+            // 处理 CREATED 事件：新增恒星
+            if (event.type === 'CREATED' && event.star) {
+                this.handleCreatedFile(event.star);
+            }
+
+            // 处理 DELETED 事件：移除恒星
+            if (event.type === 'DELETED' && event.star_id) {
+                this.handleDeletedFile(event.star_id);
+            }
+
+            const log = document.getElementById('event-log');
+            const item = document.createElement('div');
+            item.className = 'event-item ' + (event.type || '').toLowerCase();
+
+            // Event type label mapping
+            const tagMap = {
+                'INIT': 'Scan',
+                'CREATED': 'Created',
+                'MODIFIED': 'Modified',
+                'DELETED': 'Deleted'
+            };
+
+            // 创建标签
+            const tag = document.createElement('span');
+            tag.className = 'event-tag ' + (event.type || '').toLowerCase();
+            tag.textContent = tagMap[event.type] || event.type;
+            item.appendChild(tag);
+
+            // 文件名
+            const nameSpan = document.createElement('span');
+            nameSpan.style.flex = '1';
+            if (event.type === 'INIT') {
+                nameSpan.textContent = (event.count || 0) + ' 个文件';
+            } else if (event.star?.name) {
+                nameSpan.textContent = event.star.name;
+            } else if (event.star_id) {
+                nameSpan.textContent = event.star_id;
+            }
+            item.appendChild(nameSpan);
+
+            log.prepend(item);
+            while (log.children.length > 20) log.removeChild(log.lastChild);
+
+            if (event.type === 'INIT' && event.stars) {
+                console.log('[App] Adding', event.stars.length, 'stars');
+                const total = event.stars.length;
+                event.stars.forEach((s, i) => {
+                    s._index = i;
+                    s._total = total;
+                    this.addStar(s);
+                });
+                this.stats.files = event.stars.length;
+                // 统计 functions 和 classes
+                let totalFuncs = 0, totalClasses = 0;
+                event.stars.forEach(s => {
+                    totalFuncs += (s.functions?.length || 0);
+                    totalClasses += (s.classes?.length || 0);
+                });
+                this.stats.functions = totalFuncs;
+                this.stats.classes = totalClasses;
+                this.updateStats();
+                this.drawConnections();
+            }
+        }
+
+        // 处理新建文件：添加新恒星 + 超新星爆发动画
+        handleCreatedFile(starData) {
+            console.log('[App] Created file:', starData.name);
+
+            // 检查是否已存在
+            if (this.stars.has(starData.id)) {
+                console.log('[App] Star already exists, updating...');
+                const star = this.stars.get(starData.id);
+                star.data = starData;
+                return;
+            }
+
+            // 先隐藏恒星，等爆发动画后再显示
+            const star = this.addStar(starData);
+            star.mesh.visible = false;
+            star.planets.forEach(p => p.visible = false);
+            if (star.label) star.label.visible = false;
+            if (star.orbitRing) star.orbitRing.visible = false;
+
+            // 超新星爆发动画
+            this._supernovaAnimation(star, starData);
+
+            // 添加到 Modified Files 面板
+            this.addModifiedFileItem(starData, 'CREATED');
+
+            // 统计更新
+            this.stats.files = this.stars.size;
+            this.stats.functions += (starData.functions?.length || 0);
+            this.stats.classes += (starData.classes?.length || 0);
+            this.updateStats();
+
+            // 重绘连线
+            this.drawConnections();
+        }
+
+        // 超新星爆发动画（CREATED 效果）
+        // 流程：0~5秒白光放大到4x（第5秒显示恒星），5~10秒白光缩小到0消失
+        _supernovaAnimation(star, starData) {
+            const scene = this.scene;
+            const position = star.mesh.position.clone();
+
+            // 1. 创建爆发白光球体（耀眼）
+            const flashGeo = new THREE.SphereGeometry(star.baseSize * 8, 16, 16);
+            const flashMat = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 1.0,
+                side: THREE.FrontSide
+            });
+            const flashMesh = new THREE.Mesh(flashGeo, flashMat);
+            flashMesh.position.copy(position);
+            scene.add(flashMesh);
+
+            // 冲击波环（一次性，很便宜）
+            const shockGeo = new THREE.RingGeometry(star.baseSize * 1.5, star.baseSize * 2.0, 32);
+            const shockMat = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide
+            });
+            const shockwave = new THREE.Mesh(shockGeo, shockMat);
+            shockwave.position.copy(position);
+            shockwave.rotation.x = Math.random() * Math.PI;
+            shockwave.rotation.z = Math.random() * Math.PI;
+            scene.add(shockwave);
+
+            const startTime = performance.now();
+            const expandDuration = 2000;   // 0~2秒：加速扩大
+            const collapseDuration = 6000;  // 总时长 6秒
+            let starShown = false;
+            let shockDone = false;
+
+            const animate = (now) => {
+                const elapsed = now - startTime;
+
+                // 同步位置
+                flashMesh.position.copy(star.mesh.position);
+                if (!shockDone) shockwave.position.copy(star.mesh.position);
+
+                if (elapsed <= expandDuration) {
+                    // === 阶段1（0~2秒）：加速扩大 ===
+                    const t = elapsed / expandDuration; // 0→1
+                    const ease = 1 - Math.pow(1 - t, 3); // ease-out 曲线
+                    const flashScale = 1 + ease * 1.5; // 1→2.5（峰值更小）
+                    flashMesh.scale.set(flashScale, flashScale, flashScale);
+                    flashMat.opacity = 1.0;
+
+                    // 冲击波：0~1.5秒扩大并淡出
+                    if (!shockDone) {
+                        const shockT = Math.min(elapsed / 1500, 1);
+                        const s = 1 + shockT * 10;
+                        shockwave.scale.set(s, s, s);
+                        shockMat.opacity = 0.7 * (1 - shockT);
+                        if (shockT >= 1) {
+                            shockDone = true;
+                            shockwave.removeFromParent();
+                            shockGeo.dispose();
+                            shockMat.dispose();
+                        }
+                    }
+
+                    requestAnimationFrame(animate);
+
+                } else if (elapsed < collapseDuration) {
+                    // ★ 第2秒：显示恒星
+                    if (!starShown) {
+                        starShown = true;
+                        star.mesh.visible = true;
+                        star.mesh.material.transparent = false;
+                        star.mesh.material.opacity = 1.0;
+                        if (window.app?.showRings && star.orbitRing) star.orbitRing.visible = true;
+                        if (window.app?.labelsVisible && star.label) star.label.visible = true;
+                    }
+
+                    // === 阶段2（2~6秒）：缩小到0 + 余辉变色 ===
+                    const t = (elapsed - expandDuration) / (collapseDuration - expandDuration); // 0→1
+                    const flashScale = 2.5 * (1 - t); // 2.5→0
+                    flashMesh.scale.set(flashScale, flashScale, flashScale);
+
+                    // 颜色：白 → 淡黄 → 橙红（超新星余辉）
+                    flashMat.color.setRGB(1.0, 1.0 - t * 0.3, 1.0 - t * 0.5);
+                    flashMat.opacity = 1.0 - t;
+
+                    requestAnimationFrame(animate);
+
+                } else {
+                    // === 动画结束 ===
+                    flashMesh.removeFromParent();
+                    flashGeo.dispose();
+                    flashMat.dispose();
+                    if (!shockDone) {
+                        shockwave.removeFromParent();
+                        shockGeo.dispose();
+                        shockMat.dispose();
+                    }
+                    return;
+                }
+            };
+
+            requestAnimationFrame(animate);
+        }
+        
+        // 处理删除文件：黑洞塌缩动画
+        handleDeletedFile(starId) {
+            console.log('[App] Deleted file, star id:', starId);
+
+            const star = this.stars.get(starId);
+            if (star) {
+                // 保存数据用于列表显示
+                const starData = { id: starId, name: star.data?.name || starId };
+
+                // 启动黑洞塌缩动画（不立即移除）
+                this._blackHoleAnimation(star, starData);
+
+                // 从 Map 移除（动画结束后才真正移除）
+                this.stars.delete(starId);
+
+                // 添加到 Modified Files 面板
+                this.addModifiedFileItem(starData, 'DELETED');
+
+                // 更新统计
+                this.stats.files = this.stars.size;
+                this.stats.functions -= (star.data?.functions?.length || 0);
+                this.stats.classes -= (star.data?.classes?.length || 0);
+                this.updateStats();
+
+                // 重绘连线
+                this.drawConnections();
+
+                console.log('[App] Star removed, remaining:', this.stars.size);
+            }
+        }
+
+        // 时空扭曲坍缩动画（DELETED 效果）
+        // 流程：0~3秒时空扭曲，3~5秒缩小到0，第5秒爆炸出粒子，粒子在很小区域飘散
+        _blackHoleAnimation(star, starData) {
+            const scene = this.scene;
+            const mesh = star.mesh;
+            const position = mesh.position.clone();
+
+            // 1. 隐藏标签和行星
+            if (star.label && star.label.parent) star.label.removeFromParent();
+            star.planets.forEach(p => { if (p.parent) p.removeFromParent(); });
+            if (star.orbitRing && star.orbitRing.parent) star.orbitRing.removeFromParent();
+            if (star.importRings) star.importRings.forEach(r => { if (r.parent) r.removeFromParent(); });
+
+            // 2. 保存原始颜色
+            const originalColor = mesh.material.color.clone();
+            const originalEmissive = mesh.material.emissive.clone();
+
+            // 3. 创建离散灰色像素粒子（集中在很小区域飘散）
+            const debrisCount = 80;
+            const debrisGeo = new THREE.BufferGeometry();
+            const debrisPos = new Float32Array(debrisCount * 3);
+            const debrisVel = [];
+            for (let i = 0; i < debrisCount; i++) {
+                debrisPos[i * 3] = position.x;
+                debrisPos[i * 3 + 1] = position.y;
+                debrisPos[i * 3 + 2] = position.z;
+                // 很小区域内的爆炸：速度范围极小
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.01 + Math.random() * 0.04; // 极小速度，集中飘散
+                const v = new THREE.Vector3(
+                    Math.cos(angle) * speed,
+                    (Math.random() - 0.5) * 0.03,
+                    Math.sin(angle) * speed
+                );
+                debrisVel.push(v);
+            }
+            debrisGeo.setAttribute('position', new THREE.BufferAttribute(debrisPos, 3));
+
+            const debrisMat = new THREE.PointsMaterial({
+                color: 0xaaaaaa,
+                size: 0.5,
+                transparent: true,
+                opacity: 0.0,
+                sizeAttenuation: true
+            });
+            const debris = new THREE.Points(debrisGeo, debrisMat);
+            scene.add(debris);
+
+            const startTime = performance.now();
+            const twistDuration = 3000;    // 0~3秒：时空扭曲
+            const shrinkDuration = 5000;    // 3~5秒：缩小到0
+            const debrisDuration = 600000;  // 5秒~10分钟：粒子飘散
+            let starRemoved = false;
+
+            const animate = (now) => {
+                const elapsed = now - startTime;
+
+                if (elapsed <= twistDuration) {
+                    // === 阶段1（0~3秒）：时空扭曲 ===
+                    const t = elapsed / twistDuration; // 0→1
+
+                    // 不规则缩放（颤抖效果）
+                    const shakeX = 1 + Math.sin(elapsed * 0.05) * 0.3 * t;
+                    const shakeY = 1 + Math.sin(elapsed * 0.03 + 1) * 0.4 * t;
+                    const shakeZ = 1 + Math.sin(elapsed * 0.04 + 2) * 0.3 * t;
+                    mesh.scale.set(shakeX, shakeY, shakeZ);
+
+                    // 颜色变暗变红（时空扭曲感）
+                    const darken = 1 - t * 0.7;
+                    mesh.material.color.setRGB(
+                        originalColor.r * darken + t * 0.9,  // 极高红色
+                        originalColor.g * darken * 0.1,
+                        originalColor.b * darken * 0.1
+                    );
+                    mesh.material.emissive.setRGB(
+                        Math.min(1.0, originalEmissive.r + t * 1.5),  // 极高红发光
+                        0,
+                        0
+                    );
+                    mesh.material.emissiveIntensity = 2.0 + t * 5.0;  // 发光强度飙升
+
+                    // 旋转加速（扭曲感）
+                    mesh.rotation.y += 0.01 * (1 + t * 4);
+                    mesh.rotation.x += 0.005 * (1 + t * 3);
+
+                    requestAnimationFrame(animate);
+
+                } else if (elapsed <= shrinkDuration) {
+                    // === 阶段2（3~5秒）：缩小到0 ===
+                    const t = (elapsed - twistDuration) / (shrinkDuration - twistDuration); // 0→1
+
+                    const s = 1 - t; // 1→0
+                    mesh.scale.set(s, s, s);
+
+                    // 颜色保持极高红色直到消失
+                    mesh.material.color.setRGB(0.9, 0, 0);
+                    mesh.material.emissive.setRGB(1.0, 0, 0);
+                    mesh.material.emissiveIntensity = 7.0 * (1 - t); // 极高发光直到消失
+
+                    // ★ 第5秒（elapsed >= shrinkDuration）：移除恒星，粒子开始淡入
+                    if (!starRemoved && elapsed >= shrinkDuration) {
+                        starRemoved = true;
+                        mesh.removeFromParent();
+                        debrisMat.opacity = 0.01;
+                    }
+
+                    requestAnimationFrame(animate);
+
+                } else if (elapsed < debrisDuration) {
+                    // === 阶段3（5秒~10分钟）：粒子飘散 ===
+                    // 粒子淡入
+                    if (debrisMat.opacity < 0.7) {
+                        debrisMat.opacity = Math.min(0.7, (elapsed - shrinkDuration) / 3000);
+                    }
+
+                    // 更新粒子位置（很小区域内飘散）
+                    const positions = debrisGeo.attributes.position.array;
+                    for (let i = 0; i < debrisCount; i++) {
+                        positions[i * 3] += debrisVel[i].x;
+                        positions[i * 3 + 1] += debrisVel[i].y;
+                        positions[i * 3 + 2] += debrisVel[i].z;
+                        debrisVel[i].multiplyScalar(0.998); // 更快减速，保持在小区域
+                    }
+                    debrisGeo.attributes.position.needsUpdate = true;
+
+                    if (elapsed >= debrisDuration) {
+                        debris.removeFromParent();
+                        debrisGeo.dispose();
+                        debrisMat.dispose();
+                        console.log('[App] Debris particles cleaned up');
+                        return;
+                    }
+
+                    requestAnimationFrame(animate);
+
+                } else {
+                    debris.removeFromParent();
+                    debrisGeo.dispose();
+                    debrisMat.dispose();
+                }
+            };
+
+            requestAnimationFrame(animate);
+        }
+        
+        // 处理修改文件：红色光晕 + 列表更新
+        handleModifiedFile(starData) {
+            // 冷却机制：防止同一文件在短时间内重复触发
+            if (!this._modificationCooldown) {
+                this._modificationCooldown = new Map();
+            }
+            const now = Date.now();
+            const lastMod = this._modificationCooldown.get(starData.id);
+            if (lastMod && now - lastMod < 2000) {
+                console.log('[App] Ignoring rapid modification (cooldown):', starData.name);
+                return;
+            }
+            this._modificationCooldown.set(starData.id, now);
+            
+            console.log('[App] Modified file:', starData.name, 'id:', starData.id);
+            
+            // 1. 尝试通过 ID 查找恒星
+            let star = this.stars.get(starData.id);
+            
+            // 如果找不到，尝试通过文件名查找
+            if (!star) {
+                console.log('[App] Star not found by id, trying name lookup...');
+                for (const [id, s] of this.stars) {
+                    if (s.data && s.data.name === starData.name) {
+                        star = s;
+                        console.log('[App] Found star by name:', id);
+                        break;
+                    }
+                }
+            }
+            
+            // 如果还是找不到，尝试通过路径查找
+            if (!star && starData.path) {
+                console.log('[App] Star not found by name, trying path lookup...');
+                for (const [id, s] of this.stars) {
+                    if (s.data && s.data.path === starData.path) {
+                        star = s;
+                        console.log('[App] Found star by path:', id);
+                        break;
+                    }
+                }
+            }
+            
+            if (star) {
+                // 2. 更新恒星数据
+                star.data = starData;
+                star.functions = starData.functions || [];
+                star.classes = starData.classes || [];
+                
+                // 3. 淡红色光晕
+                star.setGlowColor(0xff8888, 1.5);  // 淡红色，强度适中
+                
+                // 4. 30秒后恢复
+                if (star.glowResetTimer) {
+                    clearTimeout(star.glowResetTimer);
+                }
+                star.glowResetTimer = setTimeout(() => {
+                    star.resetGlowColor();
+                    star.glowResetTimer = null;
+                }, 30000);
+            } else {
+                console.log('[App] WARNING: Star not found for modified file:', starData.name);
+            }
+            
+            // 5. 更新修改文件列表
+            this.addModifiedFileItem(starData, 'MODIFIED');
+        }
+        
+        // 添加修改文件到列表
+        addModifiedFileItem(starData, eventType = 'modified') {
+            const panel = document.getElementById('modified-panel');
+            const list = document.getElementById('modified-files-list');
+            
+            // 显示面板
+            panel.style.display = 'block';
+            
+            // Event type label mapping
+            const tagMap = {
+                'CREATED': 'Created',
+                'MODIFIED': 'Modified',
+                'DELETED': 'Deleted'
+            };
+            
+            // 创建列表项
+            const item = document.createElement('div');
+            item.className = 'modified-file-item ' + (eventType || 'modified').toLowerCase();
+            item.dataset.starId = starData.id;
+            
+            const time = new Date().toLocaleTimeString();
+            
+            // 标签
+            const tag = document.createElement('span');
+            tag.className = 'event-tag ' + (eventType || 'modified').toLowerCase();
+            tag.textContent = tagMap[eventType] || '修改';
+            tag.style.minWidth = '36px';
+            item.appendChild(tag);
+            
+            // 文件名
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'filename';
+            nameDiv.textContent = starData.name;
+            nameDiv.style.flex = '1';
+            item.appendChild(nameDiv);
+            
+            // 时间
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'time';
+            timeDiv.textContent = time;
+            item.appendChild(timeDiv);
+            
+            // 点击跳转到恒星（新增的文件可能还没有恒星）
+            item.addEventListener('click', () => {
+                const star = this.stars.get(starData.id);
+                if (star) {
+                    const pos = star.mesh.position;
+                    this.cameraFocusOn(pos);
+                }
+            });
+            
+            // 添加到列表顶部
+            list.prepend(item);
+            
+            // 限制列表数量（保留最近20个）
+            while (list.children.length > 20) {
+                list.removeChild(list.lastChild);
+            }
+        }
+        
+        // 相机聚焦到指定位置
+        cameraFocusOn(position) {
+            // 相机移动到目标位置上方
+            const targetPos = position.clone();
+            const offset = new THREE.Vector3(50, 50, 150);
+            this.camera.position.copy(targetPos.clone().add(offset));
+            this.controls.target.copy(targetPos);
+        }
+
+        addStar(data) {
+            // 优先通过 ID 查找
+            let existingStar = this.stars.get(data.id);
+            
+            // 如果找不到，尝试通过名称查找
+            if (!existingStar) {
+                for (const [id, s] of this.stars) {
+                    if (s.data && s.data.name === data.name) {
+                        existingStar = s;
+                        // 更新 Map 中的 key（如果 ID 不同）
+                        if (id !== data.id) {
+                            this.stars.delete(id);
+                            this.stars.set(data.id, existingStar);
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            // 如果恒星已存在，更新数据
+            if (existingStar) {
+                console.log('[App] updateStar:', data.name);
+                existingStar.data = data;
+                existingStar.functions = data.functions || [];
+                existingStar.classes = data.classes || [];
+                return existingStar;
+            }
+            
+            // 创建新恒星
+            console.log('[App] addStar:', data.name);
+            const star = new Star(data, this.scene);
+            this.stars.set(data.id, star);
+            this.stats.files = this.stars.size;
+            // 统计 functions 和 classes
+            this.stats.functions += (data.functions?.length || 0);
+            this.stats.classes += (data.classes?.length || 0);
+            this.updateStats();
+            // 重绘连线
+            this.drawConnections();
+            return star;
+        }
+
+        updateStats() {
+            document.getElementById('stat-files').textContent = this.stats.files;
+            document.getElementById('stat-functions').textContent = this.stats.functions;
+            document.getElementById('stat-classes').textContent = this.stats.classes;
+        }
+
+        drawConnections() {
+            // 清除旧连线
+            if (this.connectionsGroup) {
+                this.connectionsGroup.removeFromParent();
+            }
+            this.connectionsGroup = new THREE.Group();
+            this.connectionPairs = [];  // 保存连线对的引用
+
+            const starArray = Array.from(this.stars.values());
+            starArray.forEach(star => {
+                const imports = star.data.imports || [];
+                imports.forEach(imp => {
+                    // 只匹配相对路径导入（./xxx 或 ../xxx）
+                    if (!imp.startsWith('./') && !imp.startsWith('../')) {
+                        return; // 跳过 npm 包和内置模块
+                    }
+
+                    // 从相对路径提取目标文件名（去掉 ./ ../ 前缀和扩展名）
+                    const impBase = imp
+                        .replace(/^\.\.?\//, '')        // 去掉 ./ 或 ../
+                        .replace(/\.(js|ts|jsx|tsx|py)$/, '');  // 去掉扩展名
+
+                    // 查找对应的恒星（文件名匹配）
+                    const target = starArray.find(s => {
+                        const nameBase = s.data.name
+                            .replace(/\.(js|ts|jsx|tsx|py)$/, '');  // 去掉扩展名
+                        return nameBase === impBase;
+                    });
+
+                    if (target && target !== star) {
+                        this.createConnection(star, target);
+                    }
+                });
+            });
+
+            this.scene.add(this.connectionsGroup);
+            console.log('[App] Created', this.connectionsGroup.children.length, 'connections');
+        }
+
+        createConnection(star1, star2) {
+            // star1 是 importer（有imports），star2 是被imported（被依赖方）
+            // 粒子从 star2 流向 star1
+            const start = star2.mesh.position.clone();  // 被依赖方（B）- 粒子起点
+            const end = star1.mesh.position.clone();    // 依赖方（A）- 粒子终点
+            
+            // 计算控制点 - 创建弧形曲线
+            const mid = start.clone().add(end).multiplyScalar(0.5);
+            const distance = start.distanceTo(end);
+            // 控制点向上偏移，形成漂亮的弧度
+            const curveHeight = Math.min(distance * 0.3, 50);
+            mid.y += curveHeight;
+            
+            // 使用 QuadraticBezierCurve3 创建弧线
+            const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+            
+            // 生成曲线的点
+            const curvePoints = curve.getPoints(30);
+            
+            // 创建一个 Group 来包含整条连线的所有元素
+            const connectionGroup = new THREE.Group();
+            
+            // 霓虹光的核心线（使用曲线点）
+            const coreGeometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+            const coreMaterial = new THREE.LineBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.9
+            });
+            const coreLine = new THREE.Line(coreGeometry, coreMaterial);
+            
+            // 光晕外层
+            const glowGeometry = new THREE.BufferGeometry().setFromPoints(curvePoints);
+            const glowMaterial = new THREE.LineBasicMaterial({
+                color: 0x00aaff,
+                transparent: true,
+                opacity: 0.3,
+                linewidth: 3
+            });
+            const glowLine = new THREE.Line(glowGeometry, glowMaterial);
+            
+            connectionGroup.add(coreLine);
+            connectionGroup.add(glowLine);
+            
+            // 创建移动粒子 - 减少数量降低视觉干扰
+            const particleCount = 2;
+            const particleGeometry = new THREE.BufferGeometry();
+            const particlePositions = new Float32Array(particleCount * 3);
+            
+            // 初始化粒子位置
+            for (let i = 0; i < particleCount; i++) {
+                const t = i / particleCount;
+                const point = curve.getPoint(t);
+                particlePositions[i * 3] = point.x;
+                particlePositions[i * 3 + 1] = point.y;
+                particlePositions[i * 3 + 2] = point.z;
+            }
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0x00ffff,
+                size: 1.0,      // 缩小粒子
+                transparent: true,
+                opacity: 0.8,   // 降低不透明度
+                sizeAttenuation: true
+            });
+            const particles = new THREE.Points(particleGeometry, particleMaterial);
+            connectionGroup.add(particles);
+            
+            // 将整条连线添加到 connectionsGroup
+            this.connectionsGroup.add(connectionGroup);
+            
+            // 保存引用以便实时更新和流光动画
+            // star1Id 和 star2Id 用于快速查找相关连线
+            const connection = { 
+                group: connectionGroup,  // 整个连线组，用于控制可见性
+                coreLine, glowLine, particles, particleGeometry,
+                coreMaterial, glowMaterial, particleMaterial,
+                star1, star2,
+                star1Id: star1.data?.id,
+                star2Id: star2.data?.id,
+                flowPhase: Math.random() * Math.PI * 2,
+                curve: curve,
+                curvePoints: curvePoints,
+                isHighlighted: false  // 是否被高亮（悬停相关）
+            };
+            this.connectionPairs.push(connection);
+            
+            // 默认不透明度（专注模式下为0即完全消失，否则为90%）
+            const defaultOpacity = this.focusMode ? 0 : 0.9;
+            coreMaterial.opacity = defaultOpacity;
+            glowMaterial.opacity = defaultOpacity * 0.3;
+            particleMaterial.opacity = defaultOpacity;
+        }
+        
+        updateConnections() {
+            if (!this.connectionPairs || this.connectionPairs.length === 0) return;
+            
+            // 更新所有连线位置和流光效果
+            const time = performance.now() / 1000;
+            const hoveredId = this.hoveredStar?.data?.id;
+            
+            this.connectionPairs.forEach(conn => {
+                const { coreLine, glowLine, particles, particleGeometry, 
+                        coreMaterial, glowMaterial, particleMaterial, 
+                        star1, star2, star1Id, star2Id, flowPhase } = conn;
+                
+                // star1 是 importer，star2 是被 imported
+                // 粒子从 star2 流向 star1
+                const start = star2.mesh.position.clone();
+                const end = star1.mesh.position.clone();
+                
+                // 重新计算控制点和曲线
+                const mid = start.clone().add(end).multiplyScalar(0.5);
+                const distance = start.distanceTo(end);
+                const curveHeight = Math.min(distance * 0.3, 50);
+                mid.y += curveHeight;
+                
+                // 创建新曲线
+                const newCurve = new THREE.QuadraticBezierCurve3(start, mid, end);
+                const newPoints = newCurve.getPoints(30);
+                
+                // 更新线条几何体
+                coreLine.geometry.setFromPoints(newPoints);
+                glowLine.geometry.setFromPoints(newPoints);
+                
+                // 判断是否与当前悬停恒星相关
+                const isRelated = this.focusMode && hoveredId && (star1Id === hoveredId || star2Id === hoveredId);
+                conn.isHighlighted = isRelated;
+                
+                // 根据状态设置不透明度和特效
+                const baseOpacity = isRelated ? 1.0 : (this.focusMode ? 0 : 0.9);
+                const flow = (Math.sin(time * 3 + flowPhase) + 1) / 2;
+                
+                if (isRelated) {
+                    // 高亮连线：流光特效更明显
+                    coreMaterial.opacity = 0.8 + flow * 0.2;
+                    glowMaterial.opacity = 0.4 + flow * 0.3;
+                    particleMaterial.opacity = 1.0;
+                    particleMaterial.size = 3;  // 粒子更大
+                    
+                    // 粒子移动速度更快
+                    const particleCount = 2;
+                    const particlePositions = particleGeometry.attributes.position.array;
+                    for (let i = 0; i < particleCount; i++) {
+                        const t = ((time * 0.6 + flowPhase + i / particleCount) % 1);
+                        const point = newCurve.getPoint(t);
+                        particlePositions[i * 3] = point.x;
+                        particlePositions[i * 3 + 1] = point.y;
+                        particlePositions[i * 3 + 2] = point.z;
+                    }
+                    particleGeometry.attributes.position.needsUpdate = true;
+                } else {
+                    // 非高亮连线：更暗更慢
+                    coreMaterial.opacity = baseOpacity * (0.6 + flow * 0.4);
+                    glowMaterial.opacity = baseOpacity * (0.2 + flow * 0.1);
+                    particleMaterial.opacity = baseOpacity * 0.5;
+                    particleMaterial.size = 1.5;
+                    
+                    // 粒子移动速度正常
+                    const particleCount = 2;
+                    const particlePositions = particleGeometry.attributes.position.array;
+                    for (let i = 0; i < particleCount; i++) {
+                        const t = ((time * 0.3 + flowPhase + i / particleCount) % 1);
+                        const point = newCurve.getPoint(t);
+                        particlePositions[i * 3] = point.x;
+                        particlePositions[i * 3 + 1] = point.y;
+                        particlePositions[i * 3 + 2] = point.z;
+                    }
+                    particleGeometry.attributes.position.needsUpdate = true;
+                }
+            });
+        }
+
+        bindControls() {
+            // 隐藏 loading overlay
+            document.getElementById('loading-overlay')?.classList.add('hidden');
+            
+            console.log('[bindControls] Starting...');
+            const btnLabels = document.getElementById('btn-labels');
+            const btnReset = document.getElementById('btn-reset');
+            const btnPath = document.getElementById('btn-path');
+            const btnSettings = document.getElementById('btn-settings');
+            console.log('[bindControls] Buttons found:', { btnReset, btnPath, btnSettings });
+            
+            // 标签显示切换
+            btnLabels?.addEventListener('click', () => {
+                this.labelsVisible = !this.labelsVisible;
+                btnLabels.classList.toggle('active', this.labelsVisible);
+                
+                // 更新所有恒星标签的显示状态
+                this.stars.forEach(star => {
+                    star.setAlwaysVisible(this.labelsVisible);
+                });
+                
+                console.log('[App] Labels visible:', this.labelsVisible);
+            });
+            
+            btnReset?.addEventListener('click', () => {
+                this.camera.position.set(0, 0, 300);
+                this.controls.target.set(0, 0, 0);
+            });
+            document.getElementById('btn-fullscreen')?.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                }
+            });
+            
+            // 路径面板开关
+            btnPath?.addEventListener('click', () => {
+                console.log('[bindControls] btn-path clicked');
+                const panel = document.getElementById('path-selector');
+                const btn = document.getElementById('btn-path');
+                panel.classList.toggle('visible');
+                btn.classList.toggle('active');
+            });
+            
+            // 设置面板开关
+            btnSettings?.addEventListener('click', () => {
+                console.log('[bindControls] btn-settings clicked');
+                const panel = document.getElementById('settings-panel');
+                const btn = document.getElementById('btn-settings');
+                panel.classList.toggle('visible');
+                btn.classList.toggle('active');
+            });
+            
+            // 滑块绑定（实时更新）
+            this.bindSlider('slider-diskRadius', 'val-diskRadius', v => v, () => this.updateGalaxy());
+            this.bindSlider('slider-diskHeight', 'val-diskHeight', v => v, () => this.updateGalaxy());
+            this.bindSlider('slider-thicknessFactor', 'val-thicknessFactor', v => (v/100).toFixed(2), () => this.updateGalaxy());
+            this.bindSlider('slider-starSize', 'val-starSize', v => (v/10).toFixed(1), () => this.updateGalaxy());
+            this.bindSlider('slider-planetSize', 'val-planetSize', v => (v/10).toFixed(1), () => this.updateGalaxy());
+            
+            // 重新扫描按钮
+            document.getElementById('btn-apply-settings')?.addEventListener('click', () => {
+                const path = document.getElementById('project-path').value.trim();
+                if (path) this.scanProject(path);
+            });
+            
+            // 显示选项 - 中轴线 + 坐标环（合并）
+            document.getElementById('toggle-axis')?.addEventListener('change', (e) => {
+                this.showAxis = e.target.checked;
+                if (this.axisGroup) {
+                    this.axisGroup.visible = this.showAxis;
+                }
+                if (this.armillaryGroup) {
+                    this.armillaryGroup.visible = this.showAxis;
+                }
+                this.saveSettings();
+            });
+            
+            // 显示选项 - 圆环
+            document.getElementById('toggle-rings')?.addEventListener('change', (e) => {
+                this.showRings = e.target.checked;
+                this.stars.forEach(star => {
+                    if (star.orbitRing) {
+                        star.orbitRing.visible = this.showRings;
+                    }
+                });
+                this.saveSettings();
+            });
+            
+            // 显示选项 - 连线
+            document.getElementById('toggle-connections')?.addEventListener('change', (e) => {
+                this.showConnections = e.target.checked;
+                if (this.connectionsGroup) {
+                    this.connectionsGroup.visible = this.showConnections;
+                }
+                this.saveSettings();
+            });
+            
+            // 专注模式 - 连线悬停高亮（默认开启，非关联连线完全消失）
+            document.getElementById('toggle-focus-mode')?.addEventListener('change', (e) => {
+                this.focusMode = e.target.checked;
+                // 重新设置所有连线的透明度
+                if (this.connectionPairs) {
+                    const defaultOpacity = this.focusMode ? 0 : 0.9;
+                    this.connectionPairs.forEach(conn => {
+                        conn.coreMaterial.opacity = defaultOpacity;
+                        conn.glowMaterial.opacity = defaultOpacity * 0.3;
+                        conn.particleMaterial.opacity = defaultOpacity * 0.5;
+                    });
+                }
+                this.saveSettings();
+            });
+            
+            // 代码抽屉关闭按钮
+            document.getElementById('close-drawer')?.addEventListener('click', () => {
+                this.closeCodeDrawer();
+            });
+
+            // 详情面板关闭按钮
+            document.getElementById('close-detail-panel')?.addEventListener('click', () => {
+                this.closeDetailPanel();
+            });
+
+            // 详情面板遮罩点击关闭
+            document.getElementById('detail-overlay')?.addEventListener('click', () => {
+                this.closeDetailPanel();
+            });
+
+            // Detail panel - Copy path button
+            document.getElementById('detail-copy-path')?.addEventListener('click', () => {
+                const path = document.getElementById('detail-path').textContent;
+                if (path) {
+                    navigator.clipboard.writeText(path).then(() => {
+                        const btn = document.getElementById('detail-copy-path');
+                        btn.textContent = 'Copied';
+                        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+                    });
+                }
+            });
+            
+            // ESC 键关闭抽屉或详情面板
+            document.addEventListener('keydown', (e) => {
+                if (e.key !== 'Escape') return;
+                const drawer = document.getElementById('code-drawer');
+                if (drawer && (drawer.style.right === '0' || drawer.style.right === '0px')) {
+                    this.closeCodeDrawer();
+                    return;
+                }
+                const detailPanel = document.getElementById('detail-panel');
+                if (detailPanel && detailPanel.style.display !== 'none') {
+                    this.closeDetailPanel();
+                }
+            });
+            
+            // 空格键暂停/恢复动画
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !e.target.closest('input, textarea')) {
+                    e.preventDefault();
+                    this.toggleAnimationPause();
+                }
+            });
+            
+            // 抽屉拖拽调整宽度
+            this.initDrawerResize();
+        }
+        
+        // 暂停/恢复动画
+        toggleAnimationPause() {
+            // 如果是自动暂停的，手动切换时清除标记
+            if (this.autoPaused && !this.isAnimationPaused) {
+                this.autoPaused = false;
+            }
+            
+            this.isAnimationPaused = !this.isAnimationPaused;
+            const statusText = this.isAnimationPaused ? 'PAUSED' : '';
+            
+            // 更新状态显示
+            let statusEl = document.getElementById('animation-status');
+            if (!statusEl) {
+                statusEl = document.createElement('div');
+                statusEl.id = 'animation-status';
+                statusEl.style.cssText = `
+                    position: fixed;
+                    top: 70px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: rgba(239, 68, 68, 0.9);
+                    color: white;
+                    padding: 8px 20px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    z-index: 2000;
+                    opacity: 0;
+                    transition: opacity 0.3s;
+                `;
+                document.body.appendChild(statusEl);
+            }
+            
+            statusEl.textContent = statusText;
+            statusEl.style.opacity = this.isAnimationPaused ? '1' : '0';
+            
+            console.log('[App] Animation paused:', this.isAnimationPaused);
+        }
+        
+        // 抽屉拖拽调整宽度
+        initDrawerResize() {
+            const handle = document.getElementById('drawer-resize-handle');
+            const drawer = document.getElementById('code-drawer');
+            let isResizing = false;
+            let startX = 0;
+            let startWidth = 0;
+            
+            handle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startX = e.clientX;
+                startWidth = drawer.offsetWidth;
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                const diff = startX - e.clientX;
+                const newWidth = Math.max(300, Math.min(window.innerWidth * 0.8, startWidth + diff));
+                drawer.style.width = newWidth + 'px';
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                }
+            });
+        }
+        
+        bindSlider(sliderId, valId, displayFn, onChange) {
+            const slider = document.getElementById(sliderId);
+            const valDisplay = document.getElementById(valId);
+            slider?.addEventListener('input', (e) => {
+                const v = parseInt(e.target.value);
+                valDisplay.textContent = displayFn(v);
+                // 更新配置
+                if (sliderId === 'slider-diskRadius') GalaxyConfig.diskRadius = v;
+                else if (sliderId === 'slider-diskHeight') GalaxyConfig.diskHeight = v;
+                else if (sliderId === 'slider-thicknessFactor') GalaxyConfig.thicknessFactor = v / 100;
+                else if (sliderId === 'slider-starSize') GalaxyConfig.starSizeMult = v / 10;
+                else if (sliderId === 'slider-planetSize') GalaxyConfig.planetSizeMult = v / 10;
+                onChange();
+                this.saveSettings(); // 自动保存设置
+            });
+        }
+        
+        // 实时更新星系
+        updateGalaxy() {
+            if (this.stars.size === 0) return;
+            
+            const { diskRadius, diskHeight, thicknessFactor, starSizeMult, planetSizeMult } = GalaxyConfig;
+            
+            this.stars.forEach(star => {
+                // 更新位置
+                star.updatePosition(GalaxyConfig);
+                // 更新大小
+                star.updateSize(starSizeMult, planetSizeMult);
+            });
+            
+            // 重绘连线
+            this.drawConnections();
+            console.log('[App] Galaxy updated');
+        }
+
+        animate() {
+            requestAnimationFrame(() => this.animate());
+
+            const now = performance.now();
+            let delta = (now - this.lastTime) / 1000;
+            this.lastTime = now;
+
+            // 如果动画被暂停，delta 为 0
+            if (this.isAnimationPaused) {
+                delta = 0;
+            }
+
+            this.controls.update();
+
+            // 中轴线旋转动画
+            if (this.axisGroup) {
+                this.axisGroup.rotation.y += delta * 0.1;
+            }
+            
+
+            // Armillary Sphere 绕Y轴旋转动画
+            if (this.armillaryGroup && this.armillaryGroup.userData.autoRotate) {
+                this.armillaryGroup.rotation.y += delta * this.armillaryGroup.userData.rotationSpeed;
+            }
+            
+            // 恒星XZ旋转动画（每个Star自己处理）
+            this.stars.forEach(s => s.animate(delta));
+
+            // 更新连线位置
+            this.updateConnections();
+
+            // Raycaster 检测悬停
+            this.checkHover();
+
+            // 更新相机坐标显示
+            const cam = this.camera.position;
+            document.getElementById('coords-display').textContent = 
+                `X: ${cam.x.toFixed(0)}  Y: ${cam.y.toFixed(0)}  Z: ${cam.z.toFixed(0)}`;
+
+            // 使用 Post-processing 渲染
+            this.composer.render();
+            
+            // CSS2D 渲染（标签）
+            this.labelRenderer.render(this.scene, this.camera);
+        }
+        
+        checkHover() {
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            
+            // 获取所有可见的恒星 mesh（跳过隐藏的恒星）
+            const meshes = Array.from(this.stars.values())
+                .filter(s => !s.dimmed)  // 跳过代码预览模式下隐藏的恒星
+                .map(s => s.mesh);
+            const intersects = this.raycaster.intersectObjects(meshes, true);
+            
+            let newHovered = null;
+            if (intersects.length > 0) {
+                // 找到所属的恒星
+                let obj = intersects[0].object;
+                while (obj && !obj.userData.id) {
+                    obj = obj.parent;
+                }
+                if (obj && obj.userData.id) {
+                    const star = this.stars.get(obj.userData.id);
+                    // 再次检查确保不是隐藏的恒星
+                    if (star && !star.dimmed) {
+                        newHovered = star;
+                    }
+                }
+            }
+            
+            // 更新悬停状态
+            if (newHovered !== this.hoveredStar) {
+                // 恢复之前的（但如果 labelsVisible 为 true，保持可见）
+                if (this.hoveredStar && this.hoveredStar.label && !this.labelsVisible) {
+                    this.hoveredStar.setLabelVisible(false);
+                }
+                
+                this.hoveredStar = newHovered;
+                
+                // 显示新的（如果 labelsVisible 为 true，所有标签都显示，不需要额外处理）
+                if (this.hoveredStar && this.hoveredStar.label && !this.labelsVisible) {
+                    this.hoveredStar.setLabelVisible(true);
+                }
+                
+                // 设置鼠标样式
+                if (this.hoveredStar) {
+                    this.renderer.domElement.style.cursor = 'pointer';
+                    // 专注模式下更新连线高亮
+                    if (this.focusMode) {
+                        // 连线高亮会在 updateConnections 中自动处理
+                    }
+                } else {
+                    this.renderer.domElement.style.cursor = 'default';
+                }
+            }
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => window.app = new CodeNebulaApp());
+    </script>
+</body>
+</html>
