@@ -4,7 +4,9 @@
 
 CodeNebula transforms your code repository into an interactive 3D visualization. Each file becomes a star, classes and functions become orbiting planets, and imports create gravitational connections between them.
 
-![CodeNebula Preview](docs/preview.gif)
+![CodeNebula Galaxy Layout](docs/images/layout.png)
+
+Explore your codebase as a living galaxy — files become stars, imports form gravitational connections.
 
 ## Features
 
@@ -56,6 +58,18 @@ python main.py --path /path/to/your/project
 4. Hover over stars to see connections highlight
 5. Click on a star to preview its code
 6. Right-click for file details
+
+### Code Preview
+
+![Code Preview](docs/images/code_preview.png)
+
+Click on any star to open the code preview drawer. View syntax-highlighted code with support for Python, JavaScript, and TypeScript. Drag the left edge to resize.
+
+### File Details
+
+![File Details](docs/images/file_details.png)
+
+Right-click on any star to view file details including line count, external imports, dependencies, functions, classes, and external references categorized by type (framework, builtin, third-party, other).
 
 ### Keyboard Shortcuts
 
